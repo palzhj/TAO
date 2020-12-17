@@ -19,21 +19,71 @@ class mux(object):
     def __init__(self, address = TCA9548_ADDR):
         self._i2c = i2c.i2c(address)
 
+    def enable_all(self):
+        self._i2c.write8(0b11111111)
+
+    def disable_all(self):
+        self._i2c.write8(0)
+
     def enable_i2ca(self):
         temp = self._i2c.read8()
-        printf("I2C MUX: 0x%02x\r\n", temp)
         temp |= MUX_CR_I2CA
         self._i2c.write8(temp)
-        temp = self._i2c.read8()
-        printf("I2C MUX: 0x%02x\r\n", temp)
 
     def disable_i2ca(self):
         temp = self._i2c.read8()
-        printf("I2C MUX: 0x%02x\r\n", temp)
         temp &= ~MUX_CR_I2CA
         self._i2c.write8(temp)
+
+    def enable_i2cb(self):
         temp = self._i2c.read8()
-        printf("I2C MUX: 0x%02x\r\n", temp)
+        temp |= MUX_CR_I2CB
+        self._i2c.write8(temp)
+
+    def disable_i2cb(self):
+        temp = self._i2c.read8()
+        temp &= ~MUX_CR_I2CB
+        self._i2c.write8(temp)
+
+    def enable_spi(self):
+        temp = self._i2c.read8()
+        temp |= MUX_CR_SPI
+        self._i2c.write8(temp)
+
+    def disable_spi(self):
+        temp = self._i2c.read8()
+        temp &= ~MUX_CR_SPI
+        self._i2c.write8(temp)
+
+    def enable_gpio(self):
+        temp = self._i2c.read8()
+        temp |= MUX_CR_GPIO
+        self._i2c.write8(temp)
+
+    def disable_gpio(self):
+        temp = self._i2c.read8()
+        temp &= ~MUX_CR_GPIO
+        self._i2c.write8(temp)
+
+    def enable_eeprom(self):
+        temp = self._i2c.read8()
+        temp |= MUX_CR_EEPROM
+        self._i2c.write8(temp)
+
+    def disable_eeprom(self):
+        temp = self._i2c.read8()
+        temp &= ~MUX_CR_EEPROM
+        self._i2c.write8(temp)
+
+    def enable_down(self):
+        temp = self._i2c.read8()
+        temp |= MUX_CR_DOWN
+        self._i2c.write8(temp)
+
+    def disable_down(self):
+        temp = self._i2c.read8()
+        temp &= ~MUX_CR_DOWN
+        self._i2c.write8(temp)
 
 #################################################################
 
