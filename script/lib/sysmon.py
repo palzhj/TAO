@@ -4,7 +4,7 @@
 # 2019-06-18 created
 import rbcp
 
-SYSMON_BASE_ADDR = 0x200
+SYSMON_BASE_ADDR = 0x100
 
 class sysmon(object):
     def __init__(self):
