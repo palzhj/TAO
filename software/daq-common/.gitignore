@@ -1,0 +1,6 @@
+src/*.o
+Makefile.inc
+*.root
+*.so
+src/daq-commonDict*
+

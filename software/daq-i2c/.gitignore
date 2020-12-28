@@ -1,0 +1,10 @@
+src/*.o
+Makefile.inc
+*.root
+klaus_i2c_dump
+klaus_i2c_dump_text
+klaus_i2c_daqserver
+src/daq-i2cDict*
+i2c_write2txt
+*.sh
+

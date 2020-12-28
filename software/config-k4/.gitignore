@@ -1,0 +1,10 @@
+.lastquit_config_chip*
+*_CHIP*.txt
+src/*.o
+cmdline_local
+cmdline_remote
+gui_local
+gui_remote
+include/resources.h
+src/resources.cpp
+Makefile.inc

@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 -->
+<interface>
+  <requires lib="gtk+" version="3.10"/>
+  <object class="GtkWindow" id="ibctrl_window">
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkBox" id="ibctrl_box">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_bottom">10</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkGrid" id="ldoctrl_grid">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="row_spacing">10</property>
+            <property name="column_spacing">30</property>
+            <property name="column_homogeneous">True</property>
+            <child>
+              <object class="GtkSeparator" id="ldoctrl_sep">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">10</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="ldoctrl_gridL">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_spacing">5</property>
+                <property name="column_spacing">10</property>
+                <child>
+                  <object class="GtkLabel" id="old:power/vcca18">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="xalign">0.10000000149011612</property>
+                    <property name="label" translatable="yes">(?)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="val:power/vcca18">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">end</property>
+                    <signal name="state-set" handler="on_val_changed2" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lbl_vcca18">
+                    <property name="width_request">130</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">VCCA18</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lbl_vcca33">
+                    <property name="width_request">130</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">VCCA33</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="val:power/vcca33">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">end</property>
+                    <signal name="state-set" handler="on_val_changed2" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="old:power/vcca33">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="xalign">0.10000000149011612</property>
+                    <property name="label" translatable="yes">(?)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="ldoctrl_gridR">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_spacing">5</property>
+                <property name="column_spacing">10</property>
+                <child>
+                  <object class="GtkLabel" id="old:power/vccd18">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="xalign">0.10000000149011612</property>
+                    <property name="label" translatable="yes">(?)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="old:power/vccd33">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="xalign">0.10000000149011612</property>
+                    <property name="label" translatable="yes">(?)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="val:power/vccd33">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">end</property>
+                    <signal name="state-set" handler="on_val_changed2" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="val:power/vccd18">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">end</property>
+                    <signal name="state-set" handler="on_val_changed2" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lbl_vccd33">
+                    <property name="width_request">130</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">VCCD33</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lbl_vccd18">
+                    <property name="width_request">130</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">VCCD18</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="power_lbl">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">10</property>
+                <property name="label" translatable="yes">LDO control</property>
+                <attributes>
+                  <attribute name="font-desc" value="Sans Bold 11"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="common_readout_grid">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="row_spacing">10</property>
+            <property name="column_spacing">30</property>
+            <property name="column_homogeneous">True</property>
+            <child>
+              <object class="GtkSeparator" id="sysctrl_sep">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">10</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="sysctrl_gridL">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_spacing">5</property>
+                <property name="column_spacing">10</property>
+                <child>
+                  <object class="GtkLabel" id="lbl_clkena">
+                    <property name="width_request">130</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">System clock (OSC)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="val:system/clkenable">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">end</property>
+                    <signal name="state-set" handler="on_val_changed2" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="old:system/clkenable">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="xalign">0.10000000149011612</property>
+                    <property name="label" translatable="yes">(?)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="sysctrl_gridR">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_spacing">5</property>
+                <property name="column_spacing">10</property>
+                <child>
+                  <object class="GtkLabel" id="lbl_aqu_ena">
+                    <property name="width_request">130</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Aquisition mode</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="old:system/aqu_ena">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="xalign">0.10000000149011612</property>
+                    <property name="label" translatable="yes">(?)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="val:system/aqu_ena">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">end</property>
+                    <signal name="state-set" handler="on_val_changed2" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="sysctrl_lbl">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">10</property>
+                <property name="label" translatable="yes">System control</property>
+                <attributes>
+                  <attribute name="font-desc" value="Sans Bold 11"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="reset_grid">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="row_spacing">10</property>
+            <property name="column_spacing">30</property>
+            <property name="column_homogeneous">True</property>
+            <child>
+              <object class="GtkSeparator" id="reset_sep">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">10</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="rst_lbl">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">10</property>
+                <property name="label" translatable="yes">Reset</property>
+                <attributes>
+                  <attribute name="font-desc" value="Sans Bold 11"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_rst">
+                <property name="label" translatable="yes">System Reset</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_btn_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_srst">
+                <property name="label" translatable="yes">SC Registers Reset</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_btn_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

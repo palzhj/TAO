@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/configuration">
+    <file compressed="true">glade_xml/ibconfig_window.xml</file>
+    <file compressed="true">glade_xml/config_window.xml</file>
+  </gresource>
+</gresources>

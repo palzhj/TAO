@@ -1,0 +1,8 @@
+~[.oa]
+*[.oa]
+chip_interface
+chip_interface.*
+.*.swp
+Makefile.inc
+main
+patmerge_main

@@ -1,0 +1,10 @@
+cmdline_local
+gui_local
+gui_remote
+.lastquit_*
+src/*.o
+src/resources.*
+include/resources.*
+Makefile.inc
+bcm2835.blink
+bcm2835.pwmexample

@@ -1,0 +1,8 @@
+objects+= src/DAQctrl_client.o src/HistogramDAQ_client.o src/EventListDAQ_client.o src/DAQ_Main_Frame.o
+dict_headers+= include/HistogramDAQ_client.h include/DAQctrl_client.h include/EventListDAQ_client.h include/DAQ_Main_Frame.h include/LinkDef.h
+binaries+= daq_gui
+binaries+= TreeDAQ getASICs
+libraries+= libDAQ_client.so
+CFLAGS+=-Iinclude `root-config --cflags` -fPIC
+include ../Makerules.inc
+all:Makefile.inc

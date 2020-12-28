@@ -1,0 +1,15 @@
+src/*.o
+Makefile.inc
+*.root
+libDAQ_client.so
+k4_histclient_test
+k4_listDAQ_threadedtest
+k4_listDAQ_test
+daq_gui
+src/*Dict.cpp
+src/*Dict.h
+src/*Dict_rdict.pcm
+
+
+TreeDAQ
+getASICs
