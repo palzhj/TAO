@@ -58,8 +58,9 @@ class i2c(object):
         prer_lo = bytes([prer_lo])
         
         if prer_lo != self._rbcp.write(self.I2C_PRER_LO_ADDR, prer_lo):
-            raise ValueError("i2c communication ERROR.")
-            return
+            raise IOError("UDP communication ERROR.")
+            return -1
+
         self._rbcp.write(self.I2C_PRER_HI_ADDR, prer_hi)
         self._rbcp.write(self.I2C_CTR_ADDR, bytes([I2C_CTR_EN])) # enable
 
@@ -75,14 +76,15 @@ class i2c(object):
         while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:        # check tip bit
             pass
 
+        if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
+            raise IOError("I2C ERROR: No acknowledge received")
+            return -1
+
         if with_internal_addr:
             self._rbcp.write(self.I2C_TXR_ADDR, bytes([internal_addr]))      # present internal address
             self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR]))           # set command (write)
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:    # check tip bit
                pass
-
-        if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
-            print("I2C ERROR: No acknowledge received")
 
         self._rbcp.write(self.I2C_TXR_ADDR, bytes([value]))                  # present slave's data
         self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR|I2C_CR_STO]))    # set command (write, stop)
@@ -103,14 +105,15 @@ class i2c(object):
         while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:        # check tip bit
             pass
 
+        if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
+            raise IOError("I2C ERROR: No acknowledge received")
+            return -1
+
         if with_internal_addr:
             self._rbcp.write(self.I2C_TXR_ADDR, bytes([internal_addr]))      # present internal address
             self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR]))           # set command (write)
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:    # check tip bit
                pass
-
-        if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
-            print("I2C ERROR: No acknowledge received")
 
         self._rbcp.write(self.I2C_TXR_ADDR, bytes([value & 0xFF]))           # present slave's data
         self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR]))               # set command (write)
@@ -142,14 +145,15 @@ class i2c(object):
         while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:        # check tip bit
             pass
 
+        if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
+            raise IOError("I2C ERROR: No acknowledge received")
+            return -1
+
         if with_internal_addr:
             self._rbcp.write(self.I2C_TXR_ADDR, bytes([internal_addr]))      # present internal address
             self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR]))           # set command (write)
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:    # check tip bit
                pass
-
-        if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
-            print("I2C ERROR: No acknowledge received")
 
         for i in range(len(data)-1):
             self._rbcp.write(self.I2C_TXR_ADDR, bytes([data[i]]))            # present slave's data
@@ -178,6 +182,10 @@ class i2c(object):
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:        # check tip bit
                 pass
 
+            if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
+                raise IOError("I2C ERROR: No acknowledge received")
+                return -1
+
             self._rbcp.write(self.I2C_TXR_ADDR, bytes([internal_addr]))          # present internal address
             self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR]))               # set command (write)
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:        # check tip bit
@@ -189,7 +197,9 @@ class i2c(object):
             pass
 
         if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
-            print("I2C ERROR: No acknowledge received")
+            raise IOError("I2C ERROR: No acknowledge received")
+            return -1
+
         self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_RD|I2C_CR_NACK|I2C_CR_STO])) # set command (read, nack, stop)
         while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:            # check tip bit
             pass
@@ -211,6 +221,10 @@ class i2c(object):
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:            # check tip bit
                 pass
 
+            if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
+                raise IOError("I2C ERROR: No acknowledge received")
+                return -1
+
             self._rbcp.write(self.I2C_TXR_ADDR, bytes([internal_addr]))              # present internal address
             self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR]))                   # set command (write)
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:            # check tip bit
@@ -222,7 +236,8 @@ class i2c(object):
             pass
 
         if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
-            print("I2C ERROR: No acknowledge received")
+            raise IOError("I2C ERROR: No acknowledge received")
+            return -1
 
         self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_RD]))                       # set command (read)
         while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:                # check tip bit
@@ -254,6 +269,10 @@ class i2c(object):
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:            # check tip bit
                 pass
 
+            if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
+                raise IOError("I2C ERROR: No acknowledge received")
+                return -1
+
             self._rbcp.write(self.I2C_TXR_ADDR, bytes([internal_addr]))              # present internal address
             self._rbcp.write(self.I2C_CR_ADDR, bytes([I2C_CR_WR]))                   # set command (write)
             while (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_TIP:            # check tip bit
@@ -265,7 +284,8 @@ class i2c(object):
             pass
 
         if (self._rbcp.read(self.I2C_SR_ADDR, 1)[0]) & I2C_SR_NORXACK:
-            print("I2C ERROR: No acknowledge received")
+            raise IOError("I2C ERROR: No acknowledge received")
+            retrun -1
 
         result = bytes()
 

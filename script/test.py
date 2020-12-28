@@ -72,6 +72,7 @@ device_addr_offset = 0
 
 TCA9548_ADDR = (0x70+device_addr_offset) << 1
 tca9548 = mux.mux(TCA9548_ADDR, LPC_PORTA_BASE_ADDR)
+
 tca9548.enable_eeprom()
 
 ###########################################
@@ -92,10 +93,10 @@ b = ucd.read_device_id()
 print(b)
 
 b = ucd.read_voltage()
-print(b)
+print(b,"V")
 b = ucd.read_current()
-print(b)
+print(b,"A")
 b = ucd.read_voltage(2)
-print(b)
+print(b,"V")
 b = ucd.read_current(2)
-print(b)
+print(b,"A")
