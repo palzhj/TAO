@@ -1,0 +1,10 @@
+CFLAGS+=-DASIO_STANDALONE -std=c++11
+LIBS+=
+objects+=src/VCRemoteClientBase.o src/VCRemoteServer.o
+binaries+=ClientTest ServerTest
+generated+=
+
+CFLAGS+=-g
+
+include Makerules.inc
+all:Makefile.inc

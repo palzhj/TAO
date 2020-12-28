@@ -1,0 +1,566 @@
+/*
+* GUI class to handle the signals from the main window, changing the underlying TVirtualConfig parameter set.
+* it can control several VirtualConfig instances, by using a "Chip-Channel-Scope" to adress the different asics.
+*
+* Also includes some tools to copy configuration data from one channel to another, and communication with a parent-like window
+* (e.g. a System overview window for a combined ctrl&daq framework)
+*
+* Author: kbriggl
+* Date:   Feb/13
+* Updates Sep 2016: GUI for KLauS4
+*
+*/
+
+
+#include <gtk/gtk.h>
+#include <gdk/gdk.h>
+#include <string.h>
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#include "Gui.h"
+#include "expand.h"
+
+#include "HandlerProxies.h"
+//using namespace std;
+
+
+
+//gui contructor
+TGui::TGui()
+{
+	builder = gtk_builder_new ();
+	gtk_builder_add_from_resource (builder, "/configuration/glade_xml/config_window.xml", NULL);
+	//gtk_builder_add_from_file(builder, "./glade_xml/config_window.xml", NULL);
+	window = 		GTK_WIDGET (	gtk_builder_get_object (builder, "config_window"));
+
+	gtk_builder_connect_signals_full( builder , TGui::connection_mapper, (gpointer)this);
+
+
+	scope.chip=0;
+	scope.channel=0;
+	scope.page=0;
+	block_val_changed=false;
+
+};
+
+
+//gui wnd destructor
+TGui::~TGui(){
+
+//	if(fpga_config != NULL)
+//		delete fpga_config;
+};
+
+
+/* connect the signals with the class' member function.
+ * This method has to be static in order to be callable by a standard c function pointer.
+ * The this pointer is passed over the user data parameter
+ */
+void TGui::connection_mapper (GtkBuilder *builder, GObject *object,
+        const gchar *signal_name, const gchar *handler_name,
+        GObject *connect_object, GConnectFlags flags, gpointer user_data)
+{
+	gpointer this__=user_data;
+	if(g_strcmp0 (handler_name, "on_window_destroy") == 0){
+		g_signal_connect(object,signal_name,
+    				G_MEMBER_CALLBACK1(TGui, on_window_close, GObject*),  this__);
+		return;
+	}
+	if(g_strcmp0 (handler_name, "on_switch_changed") == 0){
+		printf("Connecting the signal %s for object %s\n", signal_name, (char*)gtk_buildable_get_name((GtkBuildable*)object));
+		g_signal_connect(object,signal_name,
+   				G_MEMBER_CALLBACK1(TGui, on_switch_changed, GObject*),  this__);
+		return;
+	}
+	if(g_strcmp0 (handler_name, "on_btn_clicked") == 0){
+		g_signal_connect(object,signal_name,
+    				G_MEMBER_CALLBACK1(TGui, on_btn_clicked , GObject*),  this__);
+		return;
+	}
+	if(g_strcmp0 (handler_name, "on_val_changed") == 0){
+		g_signal_connect(object,signal_name,
+    				G_MEMBER_CALLBACK1(TGui, on_val_changed, GObject*),  this__);
+		return;
+	}
+	if(g_strcmp0 (handler_name, "on_val_changed2") == 0){
+		g_signal_connect(object,signal_name,
+    				G_MEMBER_CALLBACK2(TGui, on_val_changed2, GObject*,gboolean),  this__);
+		return;
+	}
+	if(g_strcmp0 (handler_name, "on_scope_changed") == 0){
+		g_signal_connect(object,signal_name,
+    				G_MEMBER_CALLBACK1(TGui, on_scope_changed , GObject* ),  this__);
+		return;
+	}
+	if(g_strcmp0 (handler_name, "on_page_changed") == 0){
+		g_signal_connect(object,signal_name,
+    				G_MEMBER_CALLBACK3(TGui, on_page_changed, GtkNotebook*, GtkWidget*, guint),  this__);
+		return;
+	}
+	printf("!! Unhandled signal: %s to %s\n",signal_name, handler_name);
+}
+
+void TGui::AddConfiguration(TKLauS4Config* conf, std::string name_str){
+	config.push_back(conf);
+	//Update chip selector
+	GtkComboBoxText *chipscale=(GtkComboBoxText*)gtk_builder_get_object(builder,"val:chipscope");
+	char id[255];
+	char aka[255];
+	if(name_str=="")
+		sprintf(aka, "Chip #%d", config.size()-1);
+	else
+		sprintf(aka, "Chip #%d ( %s )", config.size()-1,name_str.c_str());
+
+	sprintf(id, "%d", config.size()-1);
+	printf("Adding configuration id=%s aka=%s\n",id,aka);
+	gtk_combo_box_text_append(chipscale,id,aka);
+	gtk_combo_box_set_active((GtkComboBox*)chipscale,0);
+	scope.chip=0;
+	UpdateScope();
+}
+
+
+
+void TGui::CopyChanInfo(PattExp::copyset &cset){
+	char cpy[255];
+	char* pos;
+
+	unsigned long long val;
+	PattExp::copyset::iterator it;
+
+	TVirtualConfig *thisConfig=config[scope.chip];
+	for (short int srcparN=0; srcparN<thisConfig->GetNParameters(); srcparN++){
+		strcpy(cpy,thisConfig->GetParName(srcparN));
+		pos=strrchr(cpy,'_');
+
+		if(pos==NULL)
+			continue;
+
+		int curr_chan=thisConfig->ChannelFromID(srcparN);
+
+		//DISABLE TO FIX COPY OF MASK BIT IN THE STIC3 GUI
+//		if(curr_chan>scope.channel)
+//			break;
+
+		if(curr_chan==scope.channel){
+//			printf("src=%s\n",cpy);
+			for (it=cset.begin(); it!=cset.end(); ++it){
+				//sprintf(pos,"_CH%d\0",it->channel);
+				sprintf(pos,"_CH%d",it->channel);
+//				printf("copy to %s\n",cpy);
+				thisConfig->GetParValueWR(srcparN,val);
+				config[it->chip]->SetParValue(cpy,val);
+			}
+		}
+	}
+}
+
+void TGui::SetAllChannels(const char* pattern, unsigned long long val,bool this_also) {
+	std::list<short int> paramset=config[scope.chip]->MatchedParamSet(pattern);
+	printf("MaskAll: %d entries\n",paramset.size());
+	for (std::list<short int>::iterator it=paramset.begin();it!=paramset.end();it++){
+		if(!this_also) //do not do it for this channel
+			if(scope.prefix_param().compare(0,std::string::npos,config[scope.chip]->GetParName(*it),scope.prefix_param().length())==0)
+				continue;
+		int ret=config[scope.chip]->SetParValue(*it,val);
+		printf("par #%d (%s): new=%lu, ret=%d\n",*it,config[scope.chip]->GetParName(*it),val,ret);
+	}
+}
+
+
+/* (GUI-)User wants to select a different page of the current chip*/
+void TGui::on_page_changed (GtkNotebook* notebook, GtkWidget* page, guint page_num){
+	printf("on_page_changed triggered (%d)\n",page_num);
+	scope.page=page_num;
+	on_scope_changed((GObject*) notebook);
+}
+/* (GUI-)User wants to select a different chip/channel*/
+void TGui::on_scope_changed (GObject *object){
+	std::string obj_name=(char*)gtk_buildable_get_name((GtkBuildable*)object);
+
+	//TODO: add named configurations and implement here!
+	//printf("on_scope_changed triggered by %s\n",obj_name.c_str());
+	//get scope selection widgets
+	GtkComboBox *channelscale=(GtkComboBox*)gtk_builder_get_object(builder,"val:channelscope");
+	GtkComboBox *chipscale=(GtkComboBox*)gtk_builder_get_object(builder,"val:chipscope");
+	GtkNotebook *nb=(GtkNotebook*)gtk_builder_get_object(builder,"config_notebook");
+	//update saved scope
+	scope.chip=gtk_combo_box_get_active(chipscale);
+	scope.channel=gtk_combo_box_get_active(channelscale);
+
+	if(obj_name.compare("val:channelscope")==0){//channel number has been changed, also switch to this page
+		scope.page=CHANNEL_PAGE;
+		gtk_notebook_set_current_page(nb,3);
+	}
+
+	if((scope.chip>=config.size()) || config[scope.chip]==NULL){
+		printf("ERROR: Selected chip: %d is not valid, reverting to 0\n",scope.chip);
+		gtk_combo_box_set_active(chipscale,0);
+		scope.chip=0;
+	}
+	printf("Selected chip: %d\n",scope.chip);
+	printf("Selected channel: %d\n",scope.channel);
+	//printf("Selected page: %d\n",scope.page);
+	UpdateScope();
+}
+
+
+/* Select a different chip/channel or the general config page, update all parameters
+   update all widgets to show the current channel's chip's settings and old values
+   after the scope has been changed by the user
+*/
+void TGui::ChangeScope(int chip, int channel, TGui::PAGES page){
+	scope.chip=chip;
+	scope.channel=channel;
+	scope.page=page;
+	//update selection widgets
+	GtkComboBox *channelscale=(GtkComboBox*)gtk_builder_get_object(builder,"val:channelscope");
+	GtkComboBox *chipscale=(GtkComboBox*)gtk_builder_get_object(builder,"val:chipscope");
+	gtk_combo_box_set_active(chipscale,scope.chip);
+	gtk_combo_box_set_active(channelscale,scope.channel);
+	UpdateScope();
+}
+
+void TGui::SetWidgetValue(GObject* obj,unsigned long long value){
+	char* object_type_name;
+	//determine object type to set their value
+	object_type_name=(char*)gtk_widget_get_name((GtkWidget*)obj);
+	//printf("%s\n",object_type_name);
+	if (strcmp(object_type_name,"GtkCheckButton")==0){
+		gtk_toggle_button_set_active((GtkToggleButton*)obj,value);
+	}else
+	if (strcmp(object_type_name,"GtkComboBoxText")==0){
+		char s[20]; sprintf(s,"%d",value);
+		gtk_combo_box_set_active_id((GtkComboBox*)obj,s);
+	}else
+	if (strcmp(object_type_name,"GtkSpinButton")==0){
+		gtk_spin_button_set_value((GtkSpinButton*)obj,value);
+	}else
+	if (strcmp(object_type_name,"GtkSwitch")==0){
+		gtk_switch_set_active (GTK_SWITCH (obj), value);
+	}else{
+		printf("ERROR: unrecognized type of GtkObject (%s)\n",object_type_name);
+	}
+}
+void TGui::SetOldValueLabel(GObject* obj,unsigned long long value){
+	std::stringstream s; s<<"("<<value<<")";
+	gtk_label_set_text((GtkLabel*) obj,s.str().c_str());
+}
+
+
+void TGui::UpdateScope(){
+
+	if(config[scope.chip]==NULL){
+		printf("configuration is NULL!");
+		return;
+	}
+	//update page widgets
+	GObject* obj=NULL;
+	unsigned long long value;
+
+	block_val_changed=true;//block the value_changed signal
+	std::list<short int> paramset=config[scope.chip]->MatchedParamSet(scope.prefix_param().c_str());
+	//printf("Parameter set in scope of %s: %d entries\n",scope.prefix_param().c_str(),paramset.size());
+	for (std::list<short int>::iterator it=paramset.begin();it!=paramset.end();it++){
+		//set current values
+		config[scope.chip]->GetParValueWR(*it,value);
+		//get widget
+		obj=gtk_builder_get_object(builder,scope.widget_name("val:",config[scope.chip]->GetParName(*it)).c_str());
+		if (obj!=NULL){
+			SetWidgetValue(obj,value);
+			//set tooltips if it does not exist yet
+			//if(!gtk_widget_has_tooltip((GtkWidget*)obj))
+			gtk_widget_set_tooltip_text ((GtkWidget*)obj,config[scope.chip]->GetParDescription(*it).c_str());
+		}else{
+			//try to find number of widgets in bitwise style
+			unsigned short bit=0;
+			for(bit=0;;bit++){
+				obj=gtk_builder_get_object(builder,scope.widget_name("val:",config[scope.chip]->GetParName(*it),bit).c_str());
+				if(obj==NULL) break;
+				SetWidgetValue(obj,value&(1<<bit));
+				//set tooltips
+				gtk_widget_set_tooltip_text ((GtkWidget*)obj,config[scope.chip]->GetParDescription(*it).c_str());
+			};
+			if(bit==0){
+				printf("ERROR: could not find widget for parameter %s! (%s)\n",
+                                                config[scope.chip]->GetParName(*it),
+                                                scope.widget_name("val:",config[scope.chip]->GetParName(*it),bit).c_str());
+				continue;
+			}
+		}
+		//set old values
+		config[scope.chip]->GetParValueRD(*it,value);
+		obj=gtk_builder_get_object(builder,scope.widget_name("old:",config[scope.chip]->GetParName(*it)).c_str());
+		if (obj!=NULL) {
+			SetOldValueLabel(obj,value);
+		}else{
+			//try to find number of widgets in bitwise style
+			unsigned short bit=0;
+			for(bit=0;;bit++){
+				obj=gtk_builder_get_object(builder,scope.widget_name("old:",config[scope.chip]->GetParName(*it),bit).c_str());
+				if(obj==NULL) break;
+				SetOldValueLabel(obj,value&(1<<bit));
+			};
+			if(bit==0){
+				printf("ERROR: could not find widget for parameter %s! (%s)\n",
+                                                config[scope.chip]->GetParName(*it),
+                                                scope.widget_name("old:",config[scope.chip]->GetParName(*it),bit).c_str());
+				continue;
+			}
+		}
+	}
+	block_val_changed=false;//unblock the value_changed signal
+
+	return;
+}
+
+//signal handlers
+void TGui::on_btn_clicked (GObject *object){
+
+	GdkRGBA red = {1.0, .0, .0, 1.0};
+	GdkRGBA green = {0.0, 1.0, .0, 1.0};
+	int r;
+	//printf("TGui::on_btn_clicked\n");
+	//what button?
+	std::string btn_name=(char*)gtk_buildable_get_name((GtkBuildable*)object);
+
+	if (btn_name.compare("btn_open")==0){
+	//"OPEN" button
+		GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
+						(GtkWindow*)window,
+						GTK_FILE_CHOOSER_ACTION_OPEN,
+						("_Cancel"), GTK_RESPONSE_CANCEL,
+						("_Open"), GTK_RESPONSE_ACCEPT,
+						NULL);
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "./");
+		if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			char *filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+			config[scope.chip]->ReadFromFile(filename);
+			g_free (filename);
+			UpdateScope();
+		}
+		gtk_widget_hide (dialog);
+	}else
+	if (btn_name.compare("btn_save")==0){
+	//"SAVE" button
+		GtkWidget *dialog = gtk_file_chooser_dialog_new ("Save File",
+						(GtkWindow*)this->window,
+						GTK_FILE_CHOOSER_ACTION_SAVE,
+						("_Cancel"), GTK_RESPONSE_CANCEL,
+						("_Save"), GTK_RESPONSE_ACCEPT,
+						NULL);
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "./");
+		char fname[50]; sprintf(fname,"Config_CHIP%d.txt",scope.chip);
+		gtk_file_chooser_set_current_name   (GTK_FILE_CHOOSER (dialog), fname);
+		if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			char *filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+			config[scope.chip]->Print(true,filename);
+			printf("Saved configuration of chip %d to file \"%s\"",scope.chip,filename);
+			g_free (filename);
+		}
+		gtk_widget_hide (dialog);
+	}else
+	if (btn_name.compare("btn_update")==0){
+	//"UPDATE" button
+		r=config[scope.chip]->UpdateConfig();
+		r=config[scope.chip]->UpdateConfig();
+
+		GtkStatusbar *sbar = (GtkStatusbar*)gtk_builder_get_object(builder,"statusbar1");
+		if( r!=0 )
+		{
+			printf("Configuartion not correct! %d\n",r);
+			gtk_widget_override_background_color((GtkWidget*)sbar,GTK_STATE_FLAG_NORMAL,&red);
+		}
+		else
+		{
+			gtk_widget_override_background_color((GtkWidget*)sbar,GTK_STATE_FLAG_NORMAL,&green);
+			printf("Configuartion correct! %d\n",r);
+		}
+
+		UpdateScope();
+	}else
+	if (btn_name.compare("btn_update_all")==0){
+	//"UPDATE ALL" button
+		for (int c=0;c<config.size();c++){
+			if(config[c]!=NULL){
+				printf("____Configuring Chip #%d____\n",c);
+				config[c]->UpdateConfig();
+				config[c]->UpdateConfig();
+			}
+		}
+		UpdateScope();
+	}else
+	if (btn_name.compare("btn_chipres")==0){
+	//"CHIP RESET" button
+		printf("____Resetting Chip #%d\n",scope.chip);
+		//config[scope.chip]->ChipReset();
+	}else
+	if (btn_name.compare("btn_chanres")==0){
+	//"CHANNEL RESET" button
+		printf("____Resetting Channels of Chip #%d\n",scope.chip);
+		//config[scope.chip]->ChannelReset();
+	}else
+	if (btn_name.compare("btn_copy")==0){
+	//"COPY" button
+		GtkEntry* entr_dst=(GtkEntry*)gtk_builder_get_object(builder,"cbox_dst");
+		if (entr_dst==NULL){
+			printf("Error: could not find copy-dst entry\n");
+			return;
+		}
+		gchar *strval;
+		g_object_get (entr_dst,
+		       "text", &strval,
+		       NULL);
+		PattExp::copyset cset;
+		int ret = PattExp::Expand(strval,cset,scope.chip);
+		if(ret<0){
+			//error in parsing dst string occured
+			char errpos[strlen(strval)];
+			memset(errpos,' ',-ret-1);
+			errpos[-ret]='^';
+			errpos[-ret+1]='\0';
+ 			GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(this->window),
+				GTK_DIALOG_DESTROY_WITH_PARENT,
+				GTK_MESSAGE_ERROR,
+				GTK_BUTTONS_OK,
+				"Error Parsing string:\n%s\n%s",
+				strval,errpos);
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_hide (dialog);
+
+
+			gtk_editable_select_region ((GtkEditable*) entr_dst,0,-1);
+			return;
+		}
+		if( (cset.begin()->chip<0) || (cset.rbegin()->chip>=config.size()))
+			return;
+		printf("____Copy from %d:%d to:\n",scope.chip,scope.channel);
+		PattExp::copyset::iterator it;
+		for (it=cset.begin(); it!=cset.end(); ++it){
+			printf("%d:%d\n",it->chip,it->channel);
+		}
+		//copy information
+		CopyChanInfo(cset);
+
+	}else
+	if (btn_name.compare("btn_mask_all_monitor")==0){
+		//"mask all" button
+		SetAllChannels("channel*/monitor_HG_disable",1,true);//false);
+		SetAllChannels("channel*/monitor_LG_disable",1,true);//false);
+		UpdateScope();
+	}else
+	if (btn_name.compare("btn_mask_all")==0){
+		//"mask all" button
+		SetAllChannels("channel*/mask",1,true);//false);
+		UpdateScope();
+	}else
+	if (btn_name.compare("btn_unmask_all")==0){
+		//"unmask all" button
+		SetAllChannels("channel*/mask",0,true);//false);
+		UpdateScope();
+	}else
+	if (btn_name.compare(0,strlen("btn_L0ValOFF_ch"),"btn_L0ValOFF_ch")==0){
+		//"disable L0 validation for channel..." button
+		int channel;
+		if(sscanf(btn_name.c_str(),"btn_L0ValOFF_ch%d",&channel)!=1){
+			printf("ERROR parsing button name %s",btn_name.c_str());
+		}
+		char parname[255];
+		sprintf(parname,"coincidence/channel%d/coincidence_mask",channel);
+		config[scope.chip]->SetParValue(parname,0);
+		printf("Disabling L0 validation for channel %d.\n",channel);
+		UpdateScope();
+	}else	printf("configuration: unknown btn_clicked sender!\n");
+
+};
+
+
+
+void TGui::on_switch_changed (GObject *object){
+	//printf("TGui::on_switch_changed\n");
+
+	std::string switch_name=(char*)gtk_buildable_get_name((GtkBuildable*)object);
+/*
+	if (switch_name.compare("switch_deser_reset")==0){
+	//Change of the reset switch
+
+		if( gtk_toggle_button_get_active((GtkToggleButton*) object)){
+			printf("Deserializer reset active\n");
+			fpga_config->UpdateDeserEnable(scope.chip,1);	//Sets the MASK bit for the deserializer, 1 means reset active
+		}else{
+			fpga_config->UpdateDeserEnable(scope.chip,0);
+			printf("Deserializer reset inactive\n");
+		}
+
+	}else
+	if (switch_name.compare("switch_deser_fetching")==0){
+	//Change of the fetch switch
+
+		if( gtk_toggle_button_get_active((GtkToggleButton*) object)){
+			printf("Function not yet implemented\n");
+		}else{
+			printf("Function not yet implemented\n");
+		}
+	}
+*/
+};
+
+
+
+
+void TGui::on_val_changed (GObject *object){
+	if(block_val_changed)
+		return;
+	int bit;
+	char* object_type_name=(char*)gtk_widget_get_name((GtkWidget*)object);
+	unsigned long long value;
+	if (strcmp(object_type_name,"GtkCheckButton")==0){
+		value=gtk_toggle_button_get_active((GtkToggleButton*)object);
+	}else if (strcmp(object_type_name,"GtkSwitch")==0){
+		value=gtk_switch_get_active((GtkSwitch*)object);
+	}else if (strcmp(object_type_name,"GtkComboBoxText")==0){
+		sscanf(gtk_combo_box_get_active_id((GtkComboBox*)object),"%lld",&value);
+	}else if ( strcmp(object_type_name,"GtkSpinButton")==0 ){
+		value=gtk_spin_button_get_value_as_int((GtkSpinButton*)object);
+	}else{
+		printf("ERROR: unrecognized type of GtkObject: %s \n",object_type_name);
+		return;
+	}
+	std::string parname=scope.param_name("val:",(char*)gtk_buildable_get_name((GtkBuildable*)object),bit);
+	if(parname.length()==0) //ignore this, duplicate handler action from other widget connected to the same adjustment
+		return;
+	//Update value
+	if(bit>=0){
+		unsigned long long oldval;
+		config[scope.chip]->GetParValueWR(parname.c_str(),oldval);
+		if(value==0)
+			value=oldval&~(1<<bit);
+		else
+			value=oldval|(1<<bit);
+	}
+	printf("new setting of Parameter %s = %llu\n",parname.c_str(),value);
+	if (config[scope.chip]->SetParValue(parname.c_str(),value) < 0)
+		printf("ERROR: did not find Parameter \"%s\" in configuration\n",parname.c_str());
+};
+
+
+void TGui::on_window_close(GObject *object){
+	char filename[200];
+	for (int c=0;c<config.size();c++){
+		sprintf(filename,".lastquit_config_chip%d",c);
+		config[c]->Print(true,filename);
+	}
+	gtk_main_quit();
+}
+
+
+void TGui::InitFPGAInterface(TMQInterface *iface)
+{
+//	fpga_config = new TSTiC2FPGAConfig(iface);
+
+}

@@ -1,0 +1,10 @@
+objects+=
+gtk_private_o+=src/resources.o
+binaries+=config_server savesetup_current loadsetup_file
+gtk_binaries+=gui_remote
+generated+=include/resources.h src/resources.cpp
+CFLAGS+=`pkg-config --cflags gtk+-3.0`
+CFLAGS+=-g -std=c++11
+
+include ../Makerules.inc
+all:Makefile.inc

@@ -1,0 +1,11 @@
+objects+=src/Klaus4Config.o
+gtk_objects+=src/Gui.o
+gtk_private_o+=src/resources.o
+binaries+=cmdline_local cmdline_remote
+gtk_binaries+=gui_local gui_remote
+generated+=include/resources.h src/resources.cpp
+CFLAGS+=`pkg-config --cflags gtk+-3.0`
+CFLAGS+=-g
+
+include ../Makerules.inc
+all:Makefile.inc
