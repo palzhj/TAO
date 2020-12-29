@@ -14,7 +14,7 @@ I2C_CR_STA      = 0b10000000 # generate (repeated) start condition
 I2C_CR_STO      = 0b01000000 # generate stop condition 
 I2C_CR_RD       = 0b00100000 # read from slave 
 I2C_CR_WR       = 0b00010000 # write to slave 
-I2C_CR_NACK     = 0b00001000 # when a receiver, sent ACK (ACK = ‘0’) or NACK (ACK = ‘1’) 
+I2C_CR_NACK     = 0b00001000 # when a receiver, sent ACK (ACK = '0') or NACK (ACK = '1') 
 I2C_CR_IACK     = 0b00000001 # Interrupt acknowledge. When set, clears a pending interrupt. 
 
 I2C_SR_NORXACK  = 0b10000000 # No acknowledge received from slave. 
