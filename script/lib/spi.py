@@ -37,7 +37,6 @@ GPIOC_PUSH_PULL  = 0b01
 GPIOC_INPUT      = 0b10
 GPIOC_OD         = 0b11
 
-
 class spi(object):
     def __init__(self, device_address = 0x28 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
         self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
@@ -56,41 +55,15 @@ class spi(object):
     def idle_mode(self):
         self._i2c.write8(SPI_CIR_ADDR)
 
-    def cs_high(self, internal_addr = SPI_SS0_ADDR):
-        if (internal_addr == SPI_SS0_ADDR):
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp |= SPI_SS0_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
-        elif (internal_addr == SPI_SS1_ADDR):
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp |= SPI_SS1_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
-        elif (internal_addr == SPI_SS2_ADDR):
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp |= SPI_SS2_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
-        else:
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp |= SPI_SS3_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
+    def cs_high(self):
+        temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
+        temp |= SPI_SS0_ADDR
+        self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
 
-    def cs_low(self, internal_addr = SPI_SS0_ADDR):
-        if (internal_addr == SPI_SS0_ADDR):
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp &= ~SPI_SS0_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
-        elif (internal_addr == SPI_SS1_ADDR):
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp &= ~SPI_SS1_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
-        elif (internal_addr == SPI_SS2_ADDR):
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp &= ~SPI_SS2_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
-        else:
-            temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
-            temp &= ~SPI_SS3_ADDR
-            self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
+    def cs_low(self):
+        temp = self._i2c.read8(True, SPI_GPIOW_ADDR)
+        temp &= ~SPI_SS0_ADDR
+        self._i2c.write8(temp, True, SPI_GPIOW_ADDR)
 
     def readBytes(self, length = 1):
         if(length>MAX_BUFFER_LEN):
@@ -98,8 +71,8 @@ class spi(object):
         else:
             return self._i2c.readBytes(length)
 
-    def writeBytes(self, data, internal_addr = SPI_SS0_ADDR):
-        self.cs_low(internal_addr)
+    def writeBytes(self, data):
+        self.cs_low()
         length = len(data)
         send_len = 0
         while length >= MAX_BUFFER_LEN:
@@ -112,4 +85,4 @@ class spi(object):
             self._i2c.writeBytes(data[send_len:], True, 0x0F)
             # print(data[send_len:])
         sleep(0.1)
-        self.cs_high(internal_addr)
+        self.cs_high()
