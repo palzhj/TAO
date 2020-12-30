@@ -267,7 +267,7 @@ int TVirtualConfig::UpdateConfig()
 
 
 int TVirtualConfig::IssueCommand(const char cmd,  int len, char* data, int reply_len, char* reply){
-        writebitcode("/junofs/users/caogf/tao/klaus_daq/software/config-k4/test.txt");
+        writebitcode("./test.txt");
 	//if(Iface!=NULL) return Iface->Command(ifaceHandID,cmd,len,data,reply_len,reply,this);
 	//else{
 //		printf("TVirtualConfig::IssueCommand(): No interface bound.\n");
@@ -458,8 +458,11 @@ void TVirtualConfig::writebitcode(const char* ofilename)
         else
                 ofile=&std::cout;
 
-        for (int nch=GetPatternByteLength()-1; nch>=0; nch--)
+	int len = GetPatternByteLength();
+
+        for (int nch=len-1; nch>=0; nch--)
         {
+            //(*ofile) << hex << (0xff & (((const char*)(bitpattern_write))[0?len-nch-1:nch]));
             (*ofile)<<change(bitpattern_write[nch]);
         }
         (*ofile)<<std::endl;
