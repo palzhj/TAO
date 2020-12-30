@@ -40,7 +40,7 @@ protected:
 
 private:
 
-
+    int fChipID;
 //verbindung zu bitpattern
     void GetFromPattern(char * const pattern , int N,unsigned long long& value) const;
     void SetInPattern(char * const pattern , int N,unsigned long long const& value) const;
@@ -84,7 +84,9 @@ public:
     */
 
     std::string change(char c);
-    void writebitcode(const char* ofilename=NULL);
+    void writebitcode(char* ofilename=NULL);
+
+    void SetChipID(int i);
 
 //Pattern Access
 ///////////////////////////

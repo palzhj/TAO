@@ -18,6 +18,8 @@
 #include "../include/VirtualConfig.h"
 #include "../include/VirtualInterface.h"
 
+#include <python2.7/Python.h>
+
 using namespace std;
 
 
@@ -267,7 +269,36 @@ int TVirtualConfig::UpdateConfig()
 
 
 int TVirtualConfig::IssueCommand(const char cmd,  int len, char* data, int reply_len, char* reply){
-        writebitcode("./test.txt");
+
+        char bitflowfile[2000];
+        sprintf(bitflowfile, "./Config_bitflow_chip%d.txt", fChipID);
+        writebitcode(bitflowfile);
+        //writebitcode("test.txt");
+
+/*
+        Py_Initialize();
+        if(!Py_IsInitialized()) std::cout << "Python initialization failed!" << std::endl;
+
+        PyRun_SimpleString("import sys");
+        PyRun_SimpleString("sys.path.append('./../../script')");
+
+        PyObject* pModule = NULL;
+        pModule = PyImport_ImportModule("start");
+        if (!pModule) {
+           printf("Can't find start module.\n");
+        }
+
+        PyObject* pFunc = NULL;
+        pFunc= PyObject_GetAttrString(pModule, "read_info");
+        if (!pFunc) {
+           printf("Can't find read_info function.\n");
+        }
+
+        PyEval_CallObject(pFunc, NULL);
+
+        Py_Finalize();
+*/
+
 	//if(Iface!=NULL) return Iface->Command(ifaceHandID,cmd,len,data,reply_len,reply,this);
 	//else{
 //		printf("TVirtualConfig::IssueCommand(): No interface bound.\n");
@@ -443,7 +474,7 @@ void TVirtualConfig::Print(bool batch,const char* ofilename)
 	}
 }
 
-void TVirtualConfig::writebitcode(const char* ofilename)
+void TVirtualConfig::writebitcode(char* ofilename)
 {
 
         std::ostream* ofile;
@@ -463,7 +494,8 @@ void TVirtualConfig::writebitcode(const char* ofilename)
         for (int nch=len-1; nch>=0; nch--)
         {
             //(*ofile) << hex << (0xff & (((const char*)(bitpattern_write))[0?len-nch-1:nch]));
-            (*ofile)<<change(bitpattern_write[nch]);
+            //(*ofile)<<change(bitpattern_write[nch]);
+            (*ofile)<<bitpattern_write[nch];
         }
         (*ofile)<<std::endl;
 
@@ -496,4 +528,9 @@ std::string TVirtualConfig::change(char c)
      }
 
     return data;
+}
+
+void TVirtualConfig::SetChipID(int i)
+{
+  fChipID = i;
 }

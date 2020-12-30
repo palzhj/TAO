@@ -4,13 +4,21 @@
 #include "Klaus4Config.h"
 #include "PatternMerger.h"
 #include "LinuxSPIdevInterface.h"
-
+#include <cstdlib>
+#include <string>
 #include <gtk/gtk.h>
 
-#define NCHIPS 1
+//#define NCHIPS 4
 
 int main (int argc, char *argv[])
 {
+
+        if(argc != 2) {
+          std::cerr << "Please specify a correct chip number. " << std::endl;
+          return 0;
+        }
+
+        int NCHIPS = std::atoi(argv[1]);
 
 	gtk_init (&argc, &argv);
 
@@ -27,6 +35,7 @@ int main (int argc, char *argv[])
         for (int i=0;i<NCHIPS;i++){
                 long long unsigned int addr;
                 configurations[i]=new TKLauS4Config(&merger);
+                configurations[i]->SetChipID(i);
 
                 sprintf(filename,"Config_CHIP%d.txt",i);
                 configurations[i]->ReadFromFile(filename);
