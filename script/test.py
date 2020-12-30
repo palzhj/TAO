@@ -75,10 +75,10 @@ ucd = ucd90xxx.ucd90xxx(UCD_ADDR, LPC_PMBUS_BASE_ADDR)
 # print(b)
 b = ucd.read_voltage(1)
 c = ucd.read_current(1)
-print("CH0: ", b,"V, ", c,"A")
+print("LPC CH_A: ", b,"V, ", c,"A")
 b = ucd.read_voltage(2)
 c = ucd.read_current(2)
-print("CH0: ", b,"V, ", c,"A")
+print("LPC CH_B: ", b,"V, ", c,"A")
 
 #################################################################
 # MUX
@@ -90,6 +90,7 @@ tca9548 = mux.mux(TCA9548_ADDR, LPC_PORTA_BASE_ADDR)
 tca9548.enable_eeprom()
 tca9548.enable_gpio()
 tca9548.enable_spi()
+tca9548.enable_i2ca()
 
 ###########################################
 # EEPROM
