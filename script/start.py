@@ -8,7 +8,19 @@ import sys
 sys.path.insert(0, "lib")
 import rbcp
 import i2c
+import mux
 import sysmon
+import ucd90xxx
+import gpio
+import spi
+import klaus6
+
+LPC_PORTA_BASE_ADDR = 0x200
+LPC_PORTB_BASE_ADDR = 0x300
+LPC_PMBUS_BASE_ADDR = 0x400
+HPC_PORTA_BASE_ADDR = 0x500
+HPC_PORTB_BASE_ADDR = 0x600
+HPC_PMBUS_BASE_ADDR = 0x700
 
 def printf(format, *args):
     sys.stdout.write(format % args)
@@ -35,14 +47,12 @@ def read_info(): # the date of compiling
 	temp = reg.read(4, 1)
 	print("Firmware version: ", temp[0])
 
-############################################################
+#################################################################
 reg = rbcp.Rbcp()
-
 read_info()
 # shift_led()
 
 sysmon = sysmon.sysmon()
-
 print("FPGA temperature: ", round(sysmon.temperature(),2), "C")
 print("FPGA vccint: ", round(sysmon.vccint(),2), "V")
 print("FPGA vccaux: ", round(sysmon.vccaux(),2), "V")
@@ -59,46 +69,108 @@ print("FPGA vccaux: ", round(sysmon.vccaux(),2), "V")
 # print(sysmon.vccaux_min())
 # print(sysmon.vccbram_min())
 
-# TCA9548_ADDR = 0x70 << 1
-# tca9548 = i2c.i2c(TCA9548_ADDR)
-# # b = tca9548.read8()
-# # printf("0x%02x\r\n", b)
-# tca9548.write8(1<<7|1<<3|1<<0) # select eeprom, si570 and si5324
-# b = tca9548.read8()
-# printf("I2C MUX: 0x%02x\r\n", b)
-
-###########################################
-# SI5324_ADDR = 0x68 <<1 # clk address
-# si5324 = i2c.i2c(SI5324_ADDR)
-
-# b = si5324.read8(True, 134)
-# printf("0x%02x\r\n", b)
-# b = si5324.read8(True, 135)
-# printf("0x%02x\r\n", b)
-
-###########################################
-# SI570_ADDR = 0x5D <<1 # clk address
-# si570 = i2c.i2c(SI570_ADDR)
-
-# b = si570.read8(True, 7)
-# printf("0x%02x\r\n", b)
-# b = si570.read8(True, 8)
-# printf("0x%02x\r\n", b)
-
-###########################################
-# M24C08_ADDR = 0x54 << 1
-# m24c08 = i2c.i2c(M24C08_ADDR)
-# b = m24c08.read8(True, 0)
-# printf("0x%02x\r\n", b)
-
-# b = m24c08.read16(True, 0)
-# printf("0x%04x\r\n", b)
-
-# # c = b'Hello World!'
-# # m24c08.writeBytes(c, True, 0)
-
-# b = m24c08.readBytes(16, True, 0)
+#################################################################
+UCD_ADDR = 0x67 << 1
+ucd = ucd90xxx.ucd90xxx(UCD_ADDR, LPC_PMBUS_BASE_ADDR)
+# b = ucd.read_device_id()
 # print(b)
+b = ucd.read_voltage(1)
+c = ucd.read_current(1)
+print("LPC CH_A: ", round(b,2), "V, ", round(c,4), "A")
+b = ucd.read_voltage(2)
+c = ucd.read_current(2)
+print("LPC CH_B: ", round(b,2), "V, ", round(c,4), "A")
 
 #################################################################
+# MUX
+device_addr_offset = 0
 
+TCA9548_ADDR = (0x70+device_addr_offset) << 1
+tca9548 = mux.mux(TCA9548_ADDR, LPC_PORTA_BASE_ADDR)
+
+tca9548.enable_eeprom()
+tca9548.enable_gpio()
+tca9548.enable_spi()
+tca9548.enable_i2ca()
+
+###########################################
+# EEPROM
+EEPROM_ADDR = (0x50+device_addr_offset) << 1
+eeprom = i2c.i2c(EEPROM_ADDR, LPC_PORTA_BASE_ADDR)
+
+# c = b'Hello World!'
+# eeprom.writeBytes(c, True, 0)
+# sleep(1)
+
+b = eeprom.readBytes(16, True, 0)
+print("EEPROM: ",b)
+
+#################################################################
+# GPIO
+GPIO_ADDR = (0x38+device_addr_offset) << 1
+gpio = gpio.gpio(GPIO_ADDR, LPC_PORTA_BASE_ADDR)
+gpio.cal_sel_reset() # select INT
+gpio.acq_en_reset()
+gpio.srst_set()
+gpio.rst_set()
+sleep(0.1)
+gpio.srst_reset()
+gpio.rst_reset()
+sleep(0.1)
+
+#################################################################
+# SPI
+SPI_ADDR = (0x28+device_addr_offset) << 1
+spi = spi.spi(SPI_ADDR, LPC_PORTA_BASE_ADDR)
+
+# length = 401
+# a = bytearray(length)
+# for i in range(length):
+# 	if(i<200):
+# 		a[i] = 0xF0
+# 	elif (i<400):
+# 		a[i] = 0x67
+# 	else:
+# 		a[i] = 0x45
+# print(a)
+
+config_bin_file = "Config_bitflow_chip0.txt"
+
+CONFIG_BIN_FOLDER = "../software/config-k4/"
+config_bin = CONFIG_BIN_FOLDER+config_bin_file
+CONFIG_BITS = 2463
+file = open(config_bin, "rb")
+bytes_all = file.read()
+file.close()
+# print (bytes_all)
+bytes_len = len(bytes_all)
+if (bytes_len != 2+CONFIG_BITS//8):
+	raise ValueError("Invalid config bin file!")
+config_all = bytearray(bytes_len-1)
+for i in range(bytes_len-1):
+	config_all[i] = (bytes_all[bytes_len-2-i]<<1)&0xFF | bytes_all[bytes_len-1-i]>>7 # Align to byte
+config_all[0] &= 0xFE
+print ("Config KLaus6")
+print (config_all)
+
+spi.writeBytes(config_all)
+
+# spi.writeBytes(a)
+# sleep(1)
+# d = spi.readBytes(200)
+# print(d)
+
+sleep(1)
+gpio.acq_en_set()
+
+#################################################################
+# KLauS6
+# KLAUS_ADDR = (0x40+device_addr_offset) << 1
+# klaus6 = klaus6.klaus6(KLAUS_ADDR, LPC_PORTA_BASE_ADDR)
+
+# for i in range(32):
+# 	c = klaus6.read8(True, i)
+# 	printf("0x%02x@%d\r\n",c,i)
+
+# c = klaus6.readEvent()
+# print (c)

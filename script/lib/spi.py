@@ -40,7 +40,7 @@ GPIOC_OD         = 0b11
 class spi(object):
     def __init__(self, device_address = 0x28 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
         self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
-        self._i2c.write8(CR_SPEED_1843, True, SPI_CR_ADDR)
+        self._i2c.write8(CR_LSB|CR_SPEED_1843, True, SPI_CR_ADDR)
         # CAN NOT select all SS as GPIO!
         # self._i2c.write8((GPIOC_PUSH_PULL<<6)|(GPIOC_PUSH_PULL<<4)|(GPIOC_PUSH_PULL<<2)|GPIOC_PUSH_PULL, True, SPI_GPIOC_ADDR)
         # self._i2c.write8(SPI_SS0_ADDR|SPI_SS1_ADDR|SPI_SS2_ADDR|SPI_SS3_ADDR, True, SPI_GPIOW_ADDR) # CS high
