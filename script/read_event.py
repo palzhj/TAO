@@ -5,15 +5,15 @@
 
 from time import sleep
 import sys
-sys.path.insert(0, "lib")
-import rbcp
-import i2c
-import mux
-import sysmon
-import ucd90xxx
-import gpio
-import spi
-import klaus6
+import lib
+from lib import rbcp
+from lib import i2c
+from lib import mux
+from lib import sysmon
+from lib import ucd90xxx
+from lib import gpio
+from lib import spi
+from lib import klaus6
 
 LPC_PORTA_BASE_ADDR = 0x200
 LPC_PORTB_BASE_ADDR = 0x300
