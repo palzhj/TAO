@@ -18,7 +18,7 @@
 #include "../include/VirtualConfig.h"
 #include "../include/VirtualInterface.h"
 
-#include <python2.7/Python.h>
+#include <python3.6m/Python.h>
 
 using namespace std;
 

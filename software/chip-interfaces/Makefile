@@ -13,7 +13,7 @@ CFLAGS= -Iinclude
 #CFLAGS+= -static
 
 LIBS= -lrt
-LIBS+= $(shell python-config --libs)
+LIBS+= $(shell python3-config --libs)
 #IMPORT_LIBS=
 #LDFLAGS=-Wl,--no-as-needed
 #LDFLAGS=-static
