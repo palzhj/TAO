@@ -4,7 +4,8 @@
 # author: zhj@ihep.ac.cn
 # 2020-12-28 created
 from time import sleep
-import i2c
+import lib
+from lib import i2c
 
 SPI_SS0_ADDR    = 0x01 # 
 SPI_SS1_ADDR    = 0x02 # 

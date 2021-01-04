@@ -3,8 +3,8 @@
 # TCA9554
 # author: zhj@ihep.ac.cn
 # 2020-12-28 created
-
-import i2c
+import lib
+from lib import i2c
 
 GPIO_IPR_ADDR = 0 # Input Port register, R
 GPIO_OPR_ADDR = 1 # Output Port register, R/W

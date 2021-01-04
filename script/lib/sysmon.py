@@ -2,7 +2,8 @@
 # This is i2c.py file
 # author: zhj@ihep.ac.cn
 # 2019-06-18 created
-import rbcp
+import lib
+from lib import rbcp
 
 SYSMON_BASE_ADDR = 0x100
 

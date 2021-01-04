@@ -4,7 +4,8 @@
 # author: zhj@ihep.ac.cn
 # 2020-12-17 created
 
-import i2c
+import lib
+from lib import i2c
 
 MUX_CR_I2CA   = 0b00000001 # I2CA for KLauS
 MUX_CR_I2CB   = 0b00000010 # I2CB for KLauS

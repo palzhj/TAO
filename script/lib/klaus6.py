@@ -4,10 +4,11 @@
 # author: zhj@ihep.ac.cn
 # 2020-12-30 created
 from time import sleep
-import rbcp
-import i2c
-import spi
-import gpio
+import lib
+from lib import rbcp
+from lib import i2c
+from lib import spi
+from lib import gpio
 
 # Event data
 # The single hit information sent through the data interfaces consists of all hit information (channel number, 

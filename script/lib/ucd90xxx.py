@@ -2,7 +2,8 @@
 # This is ucd90160.py file
 # author: zhj@ihep.ac.cn
 # 2019-06-28 created
-import i2c
+import lib
+from lib import i2c
 import math
 
 class ucd90xxx(object):

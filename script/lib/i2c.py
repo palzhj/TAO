@@ -2,7 +2,8 @@
 # This is i2c.py file
 # author: zhj@ihep.ac.cn
 # 2019-06-18 created
-import rbcp
+import lib
+from lib import rbcp
 
 I2C_CTR_EN      = 0b10000000 # I2C core enable bit
 I2C_CTR_IEN     = 0b01000000 # I2C core interrupt enable bit. 
