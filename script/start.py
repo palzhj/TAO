@@ -133,8 +133,10 @@ spi = spi.spi(SPI_ADDR, LPC_PORTA_BASE_ADDR)
 # 	else:
 # 		a[i] = 0x45
 # print(a)
-
-config_bin_file = "Config_bitflow_chip0.txt"
+if len(sys.argv) < 2:
+	config_bin_file = "Config_bitflow_chip0.txt"
+else:
+	config_bin_file = sys.argv[1]
 
 CONFIG_BIN_FOLDER = "../software/config-k4/"
 config_bin = CONFIG_BIN_FOLDER+config_bin_file
