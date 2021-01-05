@@ -15,6 +15,7 @@
 #include <sstream>
 #include <fstream>
 #include <list>
+#include <string>
 #include "../include/VirtualConfig.h"
 #include "../include/VirtualInterface.h"
 
@@ -264,7 +265,7 @@ int TVirtualConfig::UpdateConfig()
     printf("\n");
 #endif
 
-	return ValidatePattern();
+	return 1;//ValidatePattern();
 }
 
 
@@ -275,7 +276,7 @@ int TVirtualConfig::IssueCommand(const char cmd,  int len, char* data, int reply
         writebitcode(bitflowfile);
         //writebitcode("test.txt");
 
-/*
+
         Py_Initialize();
         if(!Py_IsInitialized()) std::cout << "Python initialization failed!" << std::endl;
 
@@ -288,16 +289,54 @@ int TVirtualConfig::IssueCommand(const char cmd,  int len, char* data, int reply
            printf("Can't find start module.\n");
         }
 
+        //get class name
+        //PyObject *pClass = PyObject_GetAttrString(pModule, "classname");
+        //PyObject *pyClassInstance = PyObject_CallObject(pClass, NULL);
+
         PyObject* pFunc = NULL;
-        pFunc= PyObject_GetAttrString(pModule, "read_info");
+        pFunc= PyObject_GetAttrString(pModule, "runSPI");
         if (!pFunc) {
            printf("Can't find read_info function.\n");
         }
 
-        PyEval_CallObject(pFunc, NULL);
+        //PyEval_CallObject(pFunc, NULL);
+
+        //int size = GetPatternByteLength();
+
+        //stringstream stream;
+
+        //for (int nch=size-1; nch>=0; nch--)
+        //{
+        //   stream << data[nch];
+        //}
+        //stream << endl;
+
+        //string pars = stream.str();
+
+        PyObject* args = PyTuple_New(1);
+        //PyObject* arg1 = Py_BuildValue("s","for testing");
+        PyObject* arg1 = Py_BuildValue("s", bitflowfile);
+
+        //when we use a class, the first parameter is self
+        //PyTuple_SetItem(args, 0, Py_BuildValue("O", pyClassInstance));
+
+        PyTuple_SetItem(args, 0, arg1);
+        //PyTuple_SetItem(args, 1, arg2);
+        
+        //PyObject* pars = Py_BuildValue("i", 1);
+        //PyObject_CallObject(pFunc, args);
+        PyObject* pRet = PyObject_CallObject(pFunc, args);
+        //int res = 0;
+        //PyArg_Parse(pRet, "i", &res);
+
+        //if(pRet)    Py_DECREF(pRet);
+        //if(arg1)    Py_DECREF(arg1);
+        //if(args)    Py_DECREF(args);
+        //if(pFunc)   Py_DECREF(pFunc);
+        //if(pModule) Py_DECREF(pModule);
 
         Py_Finalize();
-*/
+
 
 	//if(Iface!=NULL) return Iface->Command(ifaceHandID,cmd,len,data,reply_len,reply,this);
 	//else{
@@ -497,6 +536,7 @@ void TVirtualConfig::writebitcode(char* ofilename)
             //(*ofile)<<change(bitpattern_write[nch]);
             (*ofile)<<bitpattern_write[nch];
         }
+        //(*ofile)<<"0";
         (*ofile)<<std::endl;
 
         if (ofilename!=NULL){

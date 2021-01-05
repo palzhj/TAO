@@ -123,48 +123,69 @@ sleep(0.1)
 SPI_ADDR = (0x28+device_addr_offset) << 1
 spi = spi.spi(SPI_ADDR, LPC_PORTA_BASE_ADDR)
 
-# length = 401
-# a = bytearray(length)
-# for i in range(length):
-# 	if(i<200):
-# 		a[i] = 0xF0
-# 	elif (i<400):
-# 		a[i] = 0x67
-# 	else:
-# 		a[i] = 0x45
-# print(a)
-if len(sys.argv) < 2:
-	config_bin_file = "Config_bitflow_chip0.txt"
-else:
-	config_bin_file = sys.argv[1]
+def runSPI(config_bin):
+    # length = 401
+    # a = bytearray(length)
+    # for i in range(length):
+    # 	if(i<200):
+    # 		a[i] = 0xF0
+    # 	elif (i<400):
+    # 		a[i] = 0x67
+    # 	else:
+    # 		a[i] = 0x45
+    # print(a)
+    #if len(sys.argv) < 2:
+    #	config_bin_file = "Config_bitflow_chip0.txt"
+    #else:
+    #	config_bin_file = sys.argv[1]
+    
+    #CONFIG_BIN_FOLDER = "../software/config-k4/"
+    #config_bin = CONFIG_BIN_FOLDER+config_bin_file
 
-CONFIG_BIN_FOLDER = "../software/config-k4/"
-config_bin = CONFIG_BIN_FOLDER+config_bin_file
-CONFIG_BITS = 2463
-file = open(config_bin, "rb")
-bytes_all = file.read()
-file.close()
-# print (bytes_all)
-bytes_len = len(bytes_all)
-if (bytes_len != 2+CONFIG_BITS//8):
-	raise ValueError("Invalid config bin file!")
-config_all = bytearray(bytes_len-1)
-for i in range(bytes_len-1):
-	config_all[i] = (bytes_all[bytes_len-2-i]<<1)&0xFF | bytes_all[bytes_len-1-i]>>7 # Align to byte
-config_all[0] &= 0xFE
-print ("Config KLaus6")
-print (config_all)
+    CONFIG_BITS = 2463
+    file = open(config_bin, "rb")
+    bytes_all = file.read()
+    file.close()
+    # print (bytes_all)
+    bytes_len = len(bytes_all)
+    if (bytes_len != 2+CONFIG_BITS//8):
+    	raise ValueError("Invalid config bin file!")
+    config_all = bytearray(bytes_len-1)
+    for i in range(bytes_len-1):
+    	config_all[i] = (bytes_all[bytes_len-2-i]<<1)&0xFF | bytes_all[bytes_len-1-i]>>7 # Align to byte
+    config_all[0] &= 0xFE
+    print ("Config KLaus6")
+    #print (len(config_all))
+    print (config_all)
+    #for i in config_all:
+    #   print('{:08b}'.format(i),end='')
+    
+    
+    #def To_bytes(s):
+    #       tmp = b''
+    #       for i in range(1, len(data), 8):
+    #               a = int(s[0+i:8+i], 2)
+    #               b = bytes([a])
+    #               tmp += b
+    #       return tmp
+    #
+    #with open(config_bin) as file:
+    #       data = file.read()
+    #       a = To_bytes(data)
+    #       print(a)
+    
+    
+    spi.writeBytes(config_all)
+    
+    #spi.writeBytes(a)
+    # sleep(1)
+    # d = spi.readBytes(200)
+    # print(d)
+    
+    sleep(1)
+    gpio.acq_en_set()
 
-spi.writeBytes(config_all)
-
-# spi.writeBytes(a)
-# sleep(1)
-# d = spi.readBytes(200)
-# print(d)
-
-sleep(1)
-gpio.acq_en_set()
-
+#runSPI("../software/config-k4/Config_bitflow_chip0.txt")
 #################################################################
 # KLauS6
 # KLAUS_ADDR = (0x40+device_addr_offset) << 1

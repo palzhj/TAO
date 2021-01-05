@@ -32,8 +32,8 @@
 TGui::TGui()
 {
 	builder = gtk_builder_new ();
-	gtk_builder_add_from_resource (builder, "/configuration/glade_xml/config_window.xml", NULL);
-	//gtk_builder_add_from_file(builder, "./glade_xml/config_window.xml", NULL);
+	//gtk_builder_add_from_resource (builder, "/configuration/glade_xml/config_window.xml", NULL);
+	gtk_builder_add_from_file(builder, "./glade_xml/config_window.xml", NULL);
 	window = 		GTK_WIDGET (	gtk_builder_get_object (builder, "config_window"));
 
 	gtk_builder_connect_signals_full( builder , TGui::connection_mapper, (gpointer)this);
