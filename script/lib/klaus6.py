@@ -34,6 +34,7 @@ class klaus6(object):
         # channel number. In this case, after reading this empty event, the DAQ may stop
         # reading further events. In KLauS6, the first byte empty event is given by 0x3F.    
         temp = self.readEvent()
+        events = bytes()
         while ((temp[0] != EMPTY_HEADER)&(temp[0] != NONE_HEADER)):
             printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
             events += temp
