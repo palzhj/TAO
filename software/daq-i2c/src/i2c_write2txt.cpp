@@ -116,14 +116,15 @@ void events_print(int nevents, k4_event* events){
 }
 
  
-#define EVT_LEN 5
+#define EVT_LEN 6
 int events_read(int file, int dev_addr, int nevents, k4_event* events, unsigned char* tmp_buf){
 	//read buffer
 	if(block_read(file,dev_addr,tmp_buf,EVT_LEN*nevents)<0) return -1;
 	//parse events, only keeping non empty ones
 	int i=0;
 	for(int n=0;n<nevents;n++){
-		if(tmp_buf[n*EVT_LEN]==0xfe){ //remove empty ones
+		//if(tmp_buf[n*EVT_LEN]==0xfe){ //remove empty ones
+		if(tmp_buf[n*EVT_LEN]==0x3f){ //remove empty ones
 			//printf("-- Empty\n");
 			continue;
 		}	

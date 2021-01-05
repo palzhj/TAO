@@ -6,5 +6,7 @@ klaus_i2c_dump_text
 klaus_i2c_daqserver
 src/daq-i2cDict*
 i2c_write2txt
+dump
+klaus_i2c_cectest
 *.sh
 

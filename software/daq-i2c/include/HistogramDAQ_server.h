@@ -25,13 +25,14 @@ struct events_buffer_type;
 class DAQServ {
 private:
 //Run conditions
-	enum runcondition {RUN,SUSPEND,EXIT} m_SERVruncondition, m_DAQruncondition;
+	enum runcondition {RUN,RUNCEC,SUSPEND,EXIT} m_SERVruncondition, m_DAQruncondition;
 	//thread object and status
 	TThread* m_DAQ_thread;
 	struct{
 		int min_chip;
 		int max_tot;
 		int usec_sleep;
+		int usec_sleep_cec;
 	} m_DAQ_options;
 	TMutex m_DAQ_mutex;
 
@@ -48,7 +49,7 @@ private:
 	std::map<unsigned char,HistogrammedResults> m_hist_results;
 
 	std::map<int,events_buffer_type> m_EventQueues;
-
+	std::map<int,klaus_cec_data> m_cec_results;
 //TCP connection
 	TServerSocket *m_Serv;      // server socket
 	TMonitor      *m_Mon;       // socket monitor
@@ -76,14 +77,16 @@ public:
    void ResetASICList();
 //Get copy of ASIC list
    std::list<unsigned char> GetASICList(){return m_ASICs;};
-   static void* ReadChipThreadStart(void* classptr){((DAQServ*)classptr)->ReadChipThread();};
 protected:
 //Client request & connection handling
    void HandleSocket(TSocket *s);
    void HandleClientRequest(TSocket* s, char* request);
 //Readchip command
-   void ReadChipThread();
    void ReadChipCmd(int min_chip=0, int max_tot=-1);
+   void ReadCECCmd();
+public:
+   void ReadChipThread();
+   void ReadCECThread();
 };
 
 

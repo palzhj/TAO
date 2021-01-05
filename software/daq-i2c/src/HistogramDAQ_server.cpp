@@ -33,7 +33,7 @@ struct events_buffer_type{
 	TList* aqu_buffer;
 	events_buffer_type();
 	~events_buffer_type();
-	void Add(klaus_aquisition& aqu);
+	void Add(klaus_acquisition& aqu);
 	void Clear();
 };
 events_buffer_type::events_buffer_type(){
@@ -49,13 +49,13 @@ events_buffer_type::~events_buffer_type(){
 		delete aqu_buffer;
 }
 
-void events_buffer_type::Add(klaus_aquisition& aqu){
+void events_buffer_type::Add(klaus_acquisition& aqu){
 	if(aqu_buffer==NULL){
 		dprintf("DAQServ::events_buffer_type::Add(): New list created.\n");
 		aqu_buffer=new TList;
 		aqu_buffer->SetOwner();
 	}
-	if(aqu.aqu_ID%prescale!=0) return;
+	if(aqu.acqu_ID%prescale!=0) return;
 	if(aqu.nEvents==0) return;
 	while(aqu_buffer->GetSize()>=bufsize){
 		TObject* atmp=aqu_buffer->Remove(aqu_buffer->FirstLink());
@@ -69,6 +69,9 @@ void events_buffer_type::Clear(){
 	if(aqu_buffer==NULL) return;
 	aqu_buffer->Clear();
 }
+
+void *ReadChipThreadStart(void* classptr){((DAQServ*)classptr)->ReadChipThread(); return 0;};
+void *ReadCECThreadStart(void* classptr) {((DAQServ*)classptr)->ReadCECThread(); return 0;};
 
 DAQServ::DAQServ(klaus_i2c_iface& iface):
 	m_iface(iface),
@@ -170,9 +173,21 @@ void DAQServ::ReadChipThread(){
 	printf("DAQServ::ReadChipThread(): Stopped\n");
 }
 
+void DAQServ::ReadCECThread(){
+	printf("DAQServ::ReadCECThread(): Started\n");
+	for(auto it=m_cec_results.begin();it!=m_cec_results.end();it++)
+		it->second.Clear();
+	m_DAQruncondition=DAQServ::RUNCEC;
+	while(m_DAQruncondition==DAQServ::RUNCEC){
+		ReadCECCmd();
+		usleep(m_DAQ_options.usec_sleep_cec);
+	}
+	printf("DAQServ::ReadCECThread(): Stopped\n");
+}
+
 void DAQServ::ReadChipCmd(int min_chip, int max_tot){
-	klaus_aquisition current_aqu=m_iface.ReadEventsUntilEmpty(m_ASICs,min_chip,max_tot);
-	current_aqu.aqu_ID=m_current_aqu_ID++;
+	klaus_acquisition current_aqu=m_iface.ReadEventsUntilEmpty(m_ASICs,min_chip,max_tot);
+	current_aqu.acqu_ID=m_current_aqu_ID++;
 
 	//TODO: verify if filling histogram is thread-save
 	//Fill HISTO monitor objects
@@ -191,6 +206,19 @@ void DAQServ::ReadChipCmd(int min_chip, int max_tot){
 	}
 	/*!*/m_DAQ_mutex.UnLock();
 }
+
+void DAQServ::ReadCECCmd(){
+	klaus_cec_data new_data;
+	m_iface.ReadCEC(*m_ASICs.begin(),new_data);
+	//new_data.Print();
+	/*!*/m_DAQ_mutex.Lock();
+	for(auto it=m_cec_results.begin();it!=m_cec_results.end();it++){
+		it->second.Add(&new_data);
+		//it->second.Print();
+	}
+	/*!*/m_DAQ_mutex.UnLock();
+}
+
 void DAQServ::UpdateResultsList(){
 	dprintf("DAQServ::UpdateResultsList()\n");
 	m_hist_results.clear();
@@ -268,6 +296,8 @@ void DAQServ::HandleClientRequest(TSocket* s, char* request){
 		dprintf("DAQServ::HandleClientRequest(): flush request\n");
 		/*!*/m_DAQ_mutex.Lock();
 		ret=m_iface.FlushFIFO(m_ASICs,n);
+		klaus_cec_data tmp_cec;
+		m_iface.ReadCEC(*m_ASICs.begin(),tmp_cec);
 		/*!*/m_DAQ_mutex.UnLock();
 		//s->Send(kMESS_OK);
 
@@ -279,12 +309,22 @@ void DAQServ::HandleClientRequest(TSocket* s, char* request){
 	}else if(sscanf(request,	"readchip-start %d %d %d",&m_DAQ_options.usec_sleep, &m_DAQ_options.min_chip, &m_DAQ_options.max_tot)==3){
 		if(m_DAQ_thread==NULL){
 			printf("DAQServ::HandleClientRequest(): readchip-start request: Starting\n");
-			m_DAQ_thread=new TThread("DAQ",&DAQServ::ReadChipThreadStart,(void*) this);
+			m_DAQ_thread=new TThread("DAQ",::ReadChipThreadStart,(void*) this);
 			m_DAQ_thread->Run();
 		}else{
 			printf("DAQServ::HandleClientRequest(): readchip-start request: Already running\n");
 		}
 		//s->Send(kMESS_OK);
+	}else if(sscanf(request,	"readcec-start %d",&m_DAQ_options.usec_sleep_cec)==1){
+		if(m_DAQ_thread==NULL){
+			printf("DAQServ::HandleClientRequest(): readCEC-start request: Starting\n");
+			m_DAQ_thread=new TThread("DAQ",::ReadCECThreadStart,(void*) this);
+			m_DAQ_thread->Run();
+		}else{
+			printf("DAQServ::HandleClientRequest(): readCEC-start request: Already running\n");
+		}
+		//s->Send(kMESS_OK);
+
 
 	}else if (!strcmp(request, 	"readchip-stop")){
 		if(m_DAQ_thread==NULL){
@@ -354,6 +394,21 @@ void DAQServ::HandleClientRequest(TSocket* s, char* request){
 		}
 		s->Send(answer);
 		/*!*/m_DAQ_mutex.UnLock();
+	}else if (!strcmp(request, 		"get cec")){
+		int sockID=s->GetDescriptor();
+		/*!*/m_DAQ_mutex.Lock();
+		auto buffer_obj=m_cec_results.find(sockID);
+		if( buffer_obj==m_cec_results.end()){
+			printf("DAQServ::HandleClientRequest(): get cec results #%d: Not installed or empty\n",sockID);
+			m_cec_results[sockID].Clear();
+			answer.SetWhat(kMESS_NOTOK);
+		}else{
+			dprintf("DAQServ::HandleClientRequest(): get cec results #%d request\n",sockID);
+			answer.WriteObject(&(buffer_obj->second));
+			answer.SetWhat(kMESS_OBJECT);
+		}
+		s->Send(answer);
+		/*!*/m_DAQ_mutex.UnLock();
 	}else if (!strcmp(request, 		"reset list")){
 		int sockID=s->GetDescriptor();
 		/*!*/m_DAQ_mutex.Lock();
@@ -369,9 +424,21 @@ void DAQServ::HandleClientRequest(TSocket* s, char* request){
 			printf("DAQServ::HandleClientRequest(): reset list request: sockID=%d not registered\n",sockID);
 			//answer.SetWhat(kMESS_NOTOK);
 		}
+	}else if (!strcmp(request, 		"reset cec")){
+		int sockID=s->GetDescriptor();
+		/*!*/m_DAQ_mutex.Lock();
+		auto buffer_obj=m_cec_results.find(sockID);
+		if( buffer_obj!=m_cec_results.end() ){
+			dprintf("DAQServ::HandleClientRequest(): resetting CEC results for sockID=%d\n",sockID);
+			buffer_obj->second.Clear();
+			//answer.SetWhat(kMESS_OK);
+		}else{
+			printf("DAQServ::HandleClientRequest(): reset CEC request: sockID=%d not registered\n",sockID);
+			m_cec_results[sockID].Clear();
+			//answer.SetWhat(kMESS_NOTOK);
+		}
 		/*!*/m_DAQ_mutex.UnLock();
 		//s->Send(answer);
-
 	//unknown request
 	}else{
 		printf("DAQServ::HandleClientRequest(): Unexpected request %s\n",request);

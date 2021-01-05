@@ -1,9 +1,14 @@
 private_objects+=
 objects+= src/EventType.o src/HistogrammedResults.o
-dict_headers+=include/EventType.h include/HistogrammedResults.h include/klaus_constants.h include/LinkDef.h
+#src/CalibrationBox.o
+dict_headers+=include/EventType.h include/HistogrammedResults.h include/klaus_constants.h
+#dict_headers+=include/CalibrationBox.h
+dict_headers+=include/LinkDef.h
+
 libraries+= klaus_storagetypes.so
 binaries+= 
 CFLAGS+=-Iinclude `root-config --cflags` -fPIC
+#CFLAGS+=-std=c++11
 
 include ../Makerules.inc
 all:Makefile.inc

@@ -14,13 +14,13 @@
 #include <iostream>
 using namespace std;
 
-#define EVT_LEN 5
-#define CEC_LEN 8
+#define EVT_LEN 6
+#define CEC_LEN 41
 #define CEC_ADDR 2
 #define REG_ADDR_LEN 1
 #define MAX_BLK_SIZE 255
 #define MAX_CHUNKS MAX_BLK_SIZE/EVT_LEN
-#define DAQLIMIT_AQULEN 10000
+#define DAQLIMIT_AQULEN 1000
 
 //#define ddprintf(args...) printf(args)
 #define ddprintf(args...)
@@ -37,8 +37,8 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 		return;
 	}
 	m_current_chipaddr=0;
-	m_chunksize=10;
-	m_i2c_buf=(unsigned char*) malloc(EVT_LEN*MAX_CHUNKS);
+	m_chunksize=20;
+	m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
 	SetSlaveAddr(0x40);
 }
 
@@ -79,10 +79,13 @@ int  klaus_i2c_iface::ReadEvents(unsigned char slave_addr, int nevents, std::lis
 	int i=0;
 	for(int n=0;n<nevents;n++)
 	{
-		if(m_i2c_buf[n*EVT_LEN]==0xfe)
+		for (int j=0; j<EVT_LEN; j++) printf("%2.2x ",m_i2c_buf[n*EVT_LEN+j]);
+		printf("\n");
+		//if(m_i2c_buf[n*EVT_LEN]==0xfe)
+		if(m_i2c_buf[n*EVT_LEN]==0x3f)
 		{ //remove empty ones
 			continue;
-		}	
+		}
 		unsigned char* event= &(m_i2c_buf[n*EVT_LEN]);
 		events.push_back(klaus_event(event,current_blockID));
 		i++;
@@ -90,16 +93,16 @@ int  klaus_i2c_iface::ReadEvents(unsigned char slave_addr, int nevents, std::lis
 	return i;
 }
 
-klaus_aquisition klaus_i2c_iface::ReadEventsUntilEmpty(unsigned char slave_addr, int min_chip, int max_tot){
+klaus_acquisition klaus_i2c_iface::ReadEventsUntilEmpty(unsigned char slave_addr, int min_chip, int max_tot){
 	std::list<unsigned char> tmp_list;
 	tmp_list.push_back(slave_addr);
 	return ReadEventsUntilEmpty(tmp_list,min_chip,max_tot);
 };
 
-klaus_aquisition klaus_i2c_iface::ReadEventsUntilEmpty(std::list<unsigned char> ASICs, int min_chip, int max_tot){
+klaus_acquisition klaus_i2c_iface::ReadEventsUntilEmpty(std::list<unsigned char> ASICs, int min_chip, int max_tot){
 	int n;
 	unsigned short blockID=0;
-	klaus_aquisition events;
+	klaus_acquisition events;
 	while(!ASICs.empty()){
 		for(std::list<unsigned char>::iterator it=ASICs.begin();it!=ASICs.end();it++){
 			n=ReadEvents(*it, m_chunksize, events.data[*it],blockID);
@@ -137,80 +140,69 @@ int  klaus_i2c_iface::FlushFIFO(unsigned char slave_addr,	int min_chip){
 }
 
 int  klaus_i2c_iface::FlushFIFO(std::list<unsigned char> ASICs,	int min_chip){
-	klaus_aquisition sink=ReadEventsUntilEmpty(ASICs,min_chip,ASICs.size()*300);
+	klaus_acquisition sink=ReadEventsUntilEmpty(ASICs,min_chip,ASICs.size()*300);
 	if(sink.failcnt>0) return -sink.failcnt;
 	if(sink.nEvents<ASICs.size()*300) return 0;
 	return -sink.nEvents;
 }
 
 int klaus_i2c_iface::ReadCEC(unsigned char slave_addr, klaus_cec_data& result){
+	result.Now();
 	//read register
-	gettimeofday(&(result.time),0);
 	if(block_read(slave_addr,CEC_ADDR,m_i2c_buf,CEC_LEN+1)<0) return -1;
+	//printf("CEC read: ");
+	//for(int i=0;i<CEC_LEN+1;i++){
+	//	printf("%2.2X ",m_i2c_buf[i]);
+	//}
+	//printf("\n");
+
+
 	//decompose results for each channel
-        /*
-        // TODO: below are codes for klaus4, I am quite confused with this codes
-        // A CEC events contains 1-bit overflow sign and 8-bit datas
-	result.cnts[0]=(0x100&(m_i2c_buf[1]<<7)) | (0xff&(m_i2c_buf[0]>>0));
-	result.cnts[1]=(0x180&(m_i2c_buf[2]<<6)) | (0x7f&(m_i2c_buf[1]>>1));
-	result.cnts[2]=(0x1C0&(m_i2c_buf[3]<<5)) | (0x3f&(m_i2c_buf[2]>>2));
-	result.cnts[3]=(0x1F0&(m_i2c_buf[4]<<4)) | (0x1f&(m_i2c_buf[3]>>3));
-	result.cnts[4]=(0x1F8&(m_i2c_buf[5]<<3)) | (0x0f&(m_i2c_buf[4]>>4));
-	result.cnts[5]=(0x1FC&(m_i2c_buf[6]<<2)) | (0x07&(m_i2c_buf[5]>>5));
-	result.cnts[6]=(0x1FF&(m_i2c_buf[7]<<1)) | (0x03&(m_i2c_buf[6]>>6));
-        */
         // TODO: this code should be more generic
-        if(constants::CH_NUM==7){
-            result.cnts[0]=(0x100&(m_i2c_buf[1]<<8)) | (0xFF&(m_i2c_buf[0]>>0));
-            result.cnts[1]=(0x180&(m_i2c_buf[2]<<7)) | (0x7F&(m_i2c_buf[1]>>1));
-            result.cnts[2]=(0x1C0&(m_i2c_buf[3]<<6)) | (0x3F&(m_i2c_buf[2]>>2));
-            result.cnts[3]=(0x1E0&(m_i2c_buf[4]<<5)) | (0x1F&(m_i2c_buf[3]>>3));
-            result.cnts[4]=(0x1F0&(m_i2c_buf[5]<<4)) | (0x0F&(m_i2c_buf[4]>>4));
-            result.cnts[5]=(0x1F8&(m_i2c_buf[6]<<3)) | (0x07&(m_i2c_buf[5]>>5));
-            result.cnts[6]=(0x1FC&(m_i2c_buf[7]<<2)) | (0x03&(m_i2c_buf[6]>>6));
-        }
-        if(constants::CH_NUM==36){
-            result.cnts[0]=(0x100&(m_i2c_buf[1]<<8)) | (0xFF&(m_i2c_buf[0]>>0));
-            result.cnts[1]=(0x180&(m_i2c_buf[2]<<7)) | (0x7F&(m_i2c_buf[1]>>1));
-            result.cnts[2]=(0x1C0&(m_i2c_buf[3]<<6)) | (0x3F&(m_i2c_buf[2]>>2));
-            result.cnts[3]=(0x1E0&(m_i2c_buf[4]<<5)) | (0x1F&(m_i2c_buf[3]>>3));
-            result.cnts[4]=(0x1F0&(m_i2c_buf[5]<<4)) | (0x0F&(m_i2c_buf[4]>>4));
-            result.cnts[5]=(0x1F8&(m_i2c_buf[6]<<3)) | (0x07&(m_i2c_buf[5]>>5));
-            result.cnts[6]=(0x1FC&(m_i2c_buf[7]<<2)) | (0x03&(m_i2c_buf[6]>>6));
-            result.cnts[7]=(0x1FE&(m_i2c_buf[8]<<1)) | (0x01&(m_i2c_buf[7]>>7));
+        result.cnts[0]=(0x100&(m_i2c_buf[40]<<8)) | (0xFF&(m_i2c_buf[41]>>0));
+        result.cnts[1]=(0x180&(m_i2c_buf[39]<<7)) | (0x7F&(m_i2c_buf[40]>>1));
+        result.cnts[2]=(0x1C0&(m_i2c_buf[38]<<6)) | (0x3F&(m_i2c_buf[39]>>2));
+        result.cnts[3]=(0x1E0&(m_i2c_buf[37]<<5)) | (0x1F&(m_i2c_buf[38]>>3));
+        result.cnts[4]=(0x1F0&(m_i2c_buf[36]<<4)) | (0x0F&(m_i2c_buf[37]>>4));
+        result.cnts[5]=(0x1F8&(m_i2c_buf[35]<<3)) | (0x07&(m_i2c_buf[36]>>5));
+        result.cnts[6]=(0x1FC&(m_i2c_buf[34]<<2)) | (0x03&(m_i2c_buf[35]>>6));
+        result.cnts[7]=(0x1FE&(m_i2c_buf[33]<<1)) | (0x01&(m_i2c_buf[34]>>7));
 
-            result.cnts[8] =(0x100&(m_i2c_buf[10]<<8)) | (0xFF&(m_i2c_buf[9]>>0));
-            result.cnts[9] =(0x180&(m_i2c_buf[11]<<7)) | (0x7F&(m_i2c_buf[10]>>1));
-            result.cnts[10]=(0x1C0&(m_i2c_buf[12]<<6)) | (0x3F&(m_i2c_buf[11]>>2));
-            result.cnts[11]=(0x1E0&(m_i2c_buf[13]<<5)) | (0x1F&(m_i2c_buf[12]>>3));
-            result.cnts[12]=(0x1F0&(m_i2c_buf[14]<<4)) | (0x0F&(m_i2c_buf[13]>>4));
-            result.cnts[13]=(0x1F8&(m_i2c_buf[15]<<3)) | (0x07&(m_i2c_buf[14]>>5));
-            result.cnts[14]=(0x1FC&(m_i2c_buf[16]<<2)) | (0x03&(m_i2c_buf[15]>>6));
-            result.cnts[15]=(0x1FE&(m_i2c_buf[17]<<1)) | (0x01&(m_i2c_buf[16]>>7));
+        result.cnts[8] =(0x100&(m_i2c_buf[31]<<8)) | (0xFF&(m_i2c_buf[32]>>0));
+        result.cnts[9] =(0x180&(m_i2c_buf[30]<<7)) | (0x7F&(m_i2c_buf[31]>>1));
+        result.cnts[10]=(0x1C0&(m_i2c_buf[29]<<6)) | (0x3F&(m_i2c_buf[30]>>2));
+        result.cnts[11]=(0x1E0&(m_i2c_buf[28]<<5)) | (0x1F&(m_i2c_buf[29]>>3));
+        result.cnts[12]=(0x1F0&(m_i2c_buf[27]<<4)) | (0x0F&(m_i2c_buf[28]>>4));
+        result.cnts[13]=(0x1F8&(m_i2c_buf[26]<<3)) | (0x07&(m_i2c_buf[27]>>5));
+        result.cnts[14]=(0x1FC&(m_i2c_buf[25]<<2)) | (0x03&(m_i2c_buf[26]>>6));
+        result.cnts[15]=(0x1FE&(m_i2c_buf[24]<<1)) | (0x01&(m_i2c_buf[25]>>7));
 
-            result.cnts[16]=(0x100&(m_i2c_buf[19]<<8)) | (0xFF&(m_i2c_buf[18]>>0));
-            result.cnts[17]=(0x180&(m_i2c_buf[20]<<7)) | (0x7F&(m_i2c_buf[19]>>1));
-            result.cnts[18]=(0x1C0&(m_i2c_buf[21]<<6)) | (0x3F&(m_i2c_buf[20]>>2));
-            result.cnts[19]=(0x1E0&(m_i2c_buf[22]<<5)) | (0x1F&(m_i2c_buf[21]>>3));
-            result.cnts[20]=(0x1F0&(m_i2c_buf[23]<<4)) | (0x0F&(m_i2c_buf[22]>>4));
-            result.cnts[21]=(0x1F8&(m_i2c_buf[24]<<3)) | (0x07&(m_i2c_buf[23]>>5));
-            result.cnts[22]=(0x1FC&(m_i2c_buf[25]<<2)) | (0x03&(m_i2c_buf[24]>>6));
-            result.cnts[23]=(0x1FE&(m_i2c_buf[26]<<1)) | (0x01&(m_i2c_buf[25]>>7));
+        result.cnts[16]=(0x100&(m_i2c_buf[22]<<8)) | (0xFF&(m_i2c_buf[23]>>0));
+        result.cnts[17]=(0x180&(m_i2c_buf[21]<<7)) | (0x7F&(m_i2c_buf[22]>>1));
+        result.cnts[18]=(0x1C0&(m_i2c_buf[20]<<6)) | (0x3F&(m_i2c_buf[21]>>2));
+        result.cnts[19]=(0x1E0&(m_i2c_buf[19]<<5)) | (0x1F&(m_i2c_buf[20]>>3));
+        result.cnts[20]=(0x1F0&(m_i2c_buf[18]<<4)) | (0x0F&(m_i2c_buf[19]>>4));
+        result.cnts[21]=(0x1F8&(m_i2c_buf[17]<<3)) | (0x07&(m_i2c_buf[18]>>5));
+        result.cnts[22]=(0x1FC&(m_i2c_buf[16]<<2)) | (0x03&(m_i2c_buf[17]>>6));
+        result.cnts[23]=(0x1FE&(m_i2c_buf[15]<<1)) | (0x01&(m_i2c_buf[16]>>7));
 
-            result.cnts[24]=(0x100&(m_i2c_buf[28]<<8)) | (0xFF&(m_i2c_buf[27]>>0));
-            result.cnts[25]=(0x180&(m_i2c_buf[29]<<7)) | (0x7F&(m_i2c_buf[28]>>1));
-            result.cnts[26]=(0x1C0&(m_i2c_buf[30]<<6)) | (0x3F&(m_i2c_buf[29]>>2));
-            result.cnts[27]=(0x1E0&(m_i2c_buf[31]<<5)) | (0x1F&(m_i2c_buf[30]>>3));
-            result.cnts[28]=(0x1F0&(m_i2c_buf[32]<<4)) | (0x0F&(m_i2c_buf[31]>>4));
-            result.cnts[29]=(0x1F8&(m_i2c_buf[33]<<3)) | (0x07&(m_i2c_buf[32]>>5));
-            result.cnts[30]=(0x1FC&(m_i2c_buf[34]<<2)) | (0x03&(m_i2c_buf[33]>>6));
-            result.cnts[31]=(0x1FE&(m_i2c_buf[35]<<1)) | (0x01&(m_i2c_buf[34]>>7));
+        result.cnts[24]=(0x100&(m_i2c_buf[13]<<8)) | (0xFF&(m_i2c_buf[14]>>0));
+        result.cnts[25]=(0x180&(m_i2c_buf[12]<<7)) | (0x7F&(m_i2c_buf[13]>>1));
+        result.cnts[26]=(0x1C0&(m_i2c_buf[11]<<6)) | (0x3F&(m_i2c_buf[12]>>2));
+        result.cnts[27]=(0x1E0&(m_i2c_buf[10]<<5)) | (0x1F&(m_i2c_buf[11]>>3));
+        result.cnts[28]=(0x1F0&(m_i2c_buf[9]<<4)) | (0x0F&(m_i2c_buf[10]>>4));
+        result.cnts[29]=(0x1F8&(m_i2c_buf[8]<<3)) | (0x07&(m_i2c_buf[9]>>5));
+        result.cnts[30]=(0x1FC&(m_i2c_buf[7]<<2)) | (0x03&(m_i2c_buf[8]>>6));
+        result.cnts[31]=(0x1FE&(m_i2c_buf[6]<<1)) | (0x01&(m_i2c_buf[7]>>7));
 
-            result.cnts[32]=(0x100&(m_i2c_buf[37]<<8)) | (0xFF&(m_i2c_buf[36]>>0));
-            result.cnts[33]=(0x180&(m_i2c_buf[38]<<7)) | (0x7F&(m_i2c_buf[37]>>1));
-            result.cnts[34]=(0x1C0&(m_i2c_buf[39]<<6)) | (0x3F&(m_i2c_buf[38]>>2));
-            result.cnts[35]=(0x1E0&(m_i2c_buf[40]<<5)) | (0x1F&(m_i2c_buf[39]>>3));
-        }
+        result.cnts[32]=(0x100&(m_i2c_buf[4]<<8)) | (0xFF&(m_i2c_buf[5]>>0));
+        result.cnts[33]=(0x180&(m_i2c_buf[3]<<7)) | (0x7F&(m_i2c_buf[4]>>1));
+        result.cnts[34]=(0x1C0&(m_i2c_buf[2]<<6)) | (0x3F&(m_i2c_buf[3]>>2));
+        result.cnts[35]=(0x1E0&(m_i2c_buf[1]<<5)) | (0x1F&(m_i2c_buf[2]>>3));
+
+	//cut off overflow
+	for(int i=0;i<35;i++)
+		if(result.cnts[i]&0x100) result.cnts[i]=0xff;
 
 	return constants::CH_NUM;
 }

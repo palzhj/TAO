@@ -32,13 +32,14 @@ class HistogrammedResults: public TObject
 		TH1F*	h_channels;
 		TH1F*	h_multi;
 	//histograms for each channel
-		TH1F*	h_gainsel_evt[constants::CH_NUM];
-		TH1F*	h_gainsel_busy[constants::CH_NUM];
+//		TH1F*	h_gainsel_evt[constants::CH_NUM];
 		TH1F*	h_ADC_10b[constants::CH_NUM];
-		TH1F*	h_ADC_6b[constants::CH_NUM];
-		TH1F*	h_ADC_PIPE[constants::CH_NUM];
+//		TH1F*	h_ADC_6b[constants::CH_NUM];
+//		TH1F*	h_ADC_PIPE[constants::CH_NUM];
 		TH1F*	h_ADC_12b[constants::CH_NUM];
-		TH1F*	h_time[constants::CH_NUM+1];    // T0 channel constants::CH_NUM + 1	
+		TH1F*	h_CC[constants::CH_NUM+1];    // 	
+		TH1F*	h_MC[constants::CH_NUM];    // 	
+		TH1F*	h_FC[constants::CH_NUM];    // 	
 		
 	//show member canvas
 		enum resultstype{
@@ -50,13 +51,15 @@ class HistogrammedResults: public TObject
 			SHOW_CH30=30,   SHOW_CH31=31,   SHOW_CH32=32,   SHOW_CH33=33,   SHOW_CH34=34,   SHOW_CH35=35,
 			SHOW_CHT0=36,
 			SHOW_GAINSEL_EVT=37,
-			SHOW_GAINSEL_BUSY=38,
 			SHOW_ADC_10B=39,
 			SHOW_ADC_6B=40,
 			SHOW_ADC_PIPE=41,
 			SHOW_ADC_12B=42,
 			SHOW_TIME=43,
-			SHOW_CHANNELS=44
+			SHOW_CHANNELS=44,
+			SHOW_FC=45,
+			SHOW_MC=46,
+			SHOW_CC=47
 		};
 		//Build a canvas with 7 pads arranged as the PCB
 		TCanvas* ChannelPhysCanvas(TCanvas* c=NULL);

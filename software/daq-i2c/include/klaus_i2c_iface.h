@@ -27,8 +27,8 @@ class	klaus_i2c_iface
 		//Read maximum max_tot non-empty events in total. Max is ignored if set to -1
 		//Events are appended to the AquisitionClass, empty events are not stored.
 		//Multi-ASIC: balanced reading multiple chips by reading N events at a time (set by SetChunksize()), then trying next ASIC
-		klaus_aquisition ReadEventsUntilEmpty(unsigned char slave_addr,	int min_chip=0, int max_tot=-1);
-		klaus_aquisition ReadEventsUntilEmpty(std::list<unsigned char> ASICs,	int min_chip=0, int max_tot=-1);
+		klaus_acquisition ReadEventsUntilEmpty(unsigned char slave_addr,	int min_chip=0, int max_tot=-1);
+		klaus_acquisition ReadEventsUntilEmpty(std::list<unsigned char> ASICs,	int min_chip=0, int max_tot=-1);
 
 		//Same Transaction as ReadEventsUntilEmpty, but no storage of events. Will read maximum 300 Events per chip. 
 		//Return:

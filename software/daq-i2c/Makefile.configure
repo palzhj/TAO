@@ -2,7 +2,7 @@ private_objects+= src/klaus_i2c_iface.o src/HistogramDAQ_server.o
 objects+= 
 dict_headers+=
 #binaries+= klaus_i2c_dump klaus_i2c_dump_text klaus_i2c_histserver i2c_write2txt
-binaries+= klaus_i2c_daqserver klaus_i2c_dump
+binaries+= klaus_i2c_daqserver klaus_i2c_cectest
 CFLAGS+=-Iinclude `root-config --cflags` -std=c++11 -fPIC
 
 include ../Makerules.inc

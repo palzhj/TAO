@@ -32,6 +32,7 @@ int main(int argc, char **argv)
 
 	// initialize the i2c inteface
 	klaus_i2c_iface i2c_iface(argv[1]);
+	i2c_iface.SetChunksize(40);
 	//daq
 	DAQServ histDAQ(i2c_iface);
 

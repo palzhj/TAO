@@ -1,8 +1,3 @@
-//
-//
-//
-//
-
 #include "EventType.h"
 #include "klaus_i2c_iface.h"
 
@@ -44,9 +39,9 @@ int main(int argc, char **argv)
 	klaus_event*  current_event=NULL;
 	std::list<klaus_event> events;
 	int nevents;
-	if(argc<6)
+	if(argc<5)
 	{
-		printf("Usage: %s [/dev/i2c-x] [dev_addr] [nevents] [voltage] [output_filename]\n", argv[0]);
+		printf("Usage: %s [/dev/i2c-x] [dev_addr] [nevents] [output_filename]\n", argv[0]);
 		return -1;
 	}
 
@@ -58,12 +53,9 @@ int main(int argc, char **argv)
 	
 	// get the number of events to read
 	nevents = atoi(argv[3]);		
-	double voltage;
-	sscanf(argv[4],"%le",&voltage);
+	char* filename=argv[4];
 
-	char* filename=argv[5];
-
-	printf("Reading %u events @ V=%e, fout=%s\n",nevents,voltage,filename);
+	printf("Reading %u events to fout=%s\n",nevents,filename);
 
 	TFile* fout = new TFile(filename,"recreate");	// open a output file to store the data
 	TTree* tree = new TTree("dump","dumptree");
@@ -72,13 +64,12 @@ int main(int argc, char **argv)
 
 
 	tree->Branch("klaus_event",&current_event);
-	tree->Branch("voltage",&voltage,"voltage/D");
 
 	unsigned int n_total=0;
 	unsigned int n_read;
 	unsigned int n_cycles=0;
 
-//	klaus_event::PrintHeader();
+	klaus_event::PrintHeader();
 	while (n_total<nevents)
 	{
 		events.clear();
