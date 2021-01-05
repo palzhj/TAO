@@ -3,6 +3,7 @@
 # KLauS6
 # author: zhj@ihep.ac.cn
 # 2020-12-30 created
+import sys
 from time import sleep
 import lib
 from lib import rbcp
@@ -35,8 +36,9 @@ class klaus6(object):
         temp = self.readEvent()
         while ((temp[0] != EMPTY_HEADER)&(temp[0] != NONE_HEADER)):
             printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
-            temp += self.readEvent()
-        return temp
+            events += temp
+            temp = self.readEvent()
+        return events
 
     def read8(self, with_internal_addr = False, internal_addr = 0):
         return self._i2c.read8(with_internal_addr, internal_addr)
