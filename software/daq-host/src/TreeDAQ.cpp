@@ -30,24 +30,28 @@ int main(int argc, char **argv) {
 	signal(SIGINT,&handler_sigint);	
 	if(argc<3)
 	{
-		printf("Usage: %s host filename.root [nAquisitions]\n", argv[0]);
+		printf("Usage: %s host filename.root [port=9090] [nAquisitions] \n", argv[0]);
 		return -1;
 	}
-	//How many aquisitions before stop
-	int nAquDo=-1;
+	unsigned int port=9090;
 	if(argc>3){
-		nAquDo=atoi(argv[3]);
+		port=atoi(argv[3]);
+	}
+	//How many acquisitions before stop
+	int nAquDo=-1;
+	if(argc>4){
+		nAquDo=atoi(argv[4]);
 	}
 
 	//output file
 	TFile* fout;
-	if(!(fout = TFile::Open(argv[2],"RECREATE")) || fout->IsZombie()){
+	if(!(fout = TFile::Open(argv[2],"CREATE")) || fout->IsZombie()){
 		return -1;
 	};
 	//output tree
 	TTree* tree=new TTree("aqu_dump","Aquisitions");
-	klaus_aquisition* curr_aqu=NULL;
-	TBranch* br=tree->Branch("aquisitions",&curr_aqu);
+	klaus_acquisition* curr_aqu=NULL;
+	TBranch* br=tree->Branch("acquisitions",&curr_aqu);
 
 	TObjLink* curr_aqu_entry;
 
@@ -61,7 +65,7 @@ int main(int argc, char **argv) {
 
 
 	//daq
-	EventListDAQ* DAQ=new EventListDAQ(argv[1]);
+	EventListDAQ* DAQ=new EventListDAQ(argv[1],port);
 	if(!DAQ->Good()){ printf("DAQ not connected, exiting.\n");return -1;}
 	gStyle->SetOptStat(11111111);
 	int n=0;
@@ -74,7 +78,7 @@ int main(int argc, char **argv) {
 		if(li!=NULL){
 			curr_aqu_entry=li->FirstLink();
 			while(curr_aqu_entry){
-				curr_aqu=(klaus_aquisition*)curr_aqu_entry->GetObject();
+				curr_aqu=(klaus_acquisition*)curr_aqu_entry->GetObject();
 				nAqu++;
 				nEventsTot+=curr_aqu->nEvents;
 				nEventsMean=nEventsMean*0.99+curr_aqu->nEvents*0.01;
@@ -83,7 +87,7 @@ int main(int argc, char **argv) {
 				tree->Fill();
 				curr_aqu_entry=curr_aqu_entry->Next();
 			}
-			printf("Total aquisitions: %d, Last ID=%d. Total Hits: %d, mean Hits/Aqu: %2.2f. Total failcnt %d, mean %2.3e\n",\
+			printf("Total acquisitions: %d, Last ID=%d. Total Hits: %d, mean Hits/Aqu: %2.2f. Total failcnt %d, mean %2.3e\n",\
 				nAqu,lastAquID,nEventsTot,nEventsMean,nFailCntTot,nFailCntMean);
 		}
 		sleep(1);

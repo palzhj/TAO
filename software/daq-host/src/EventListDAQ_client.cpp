@@ -2,11 +2,10 @@
 //Author: K.Briggl
 
 
-#include "EventType.h"
 #include "EventListDAQ_client.h"
 #include "TList.h"
-EventListDAQ::EventListDAQ(std::string host):
-	DAQctrl(host),
+EventListDAQ::EventListDAQ(std::string host,unsigned short port):
+	DAQctrl(host,port),
 	m_res(NULL)
 	{}
 
@@ -27,7 +26,8 @@ TList* EventListDAQ::FetchResults(){
 	if(m_res!=NULL) delete m_res;
 	m_res=(TList*)CommandRepliesObject(TList::Class(),"get list");
 	if(m_res!=NULL){
-		std::cout<<"EventListDAQ::FetchResults(): Got list of size "<<m_res->GetSize()<<std::endl;
+		//if(m_res->GetSize()>0)
+		//	std::cout<<"EventListDAQ::FetchResults(): Got list of size "<<m_res->GetSize()<<std::endl;
 	}
 	else
 		std::cout<<"EventListDAQ::FetchResults(): No list returned, forgot to register?"<<std::endl;

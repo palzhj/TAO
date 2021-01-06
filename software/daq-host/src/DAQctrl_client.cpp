@@ -7,10 +7,10 @@
 #include "TMessage.h"
 #include "TClass.h"
 
-DAQctrl::DAQctrl(std::string host):
+DAQctrl::DAQctrl(std::string host, unsigned short port):
 	m_Socket(NULL)
 {
-	if(host!="") Connect(host);
+	if(host!="") Connect(host,port);
 }
 
 
@@ -18,17 +18,18 @@ DAQctrl::~DAQctrl(){
 	if(m_Socket!=NULL) delete m_Socket;
 }
 
-void DAQctrl::Connect(std::string host)
+void DAQctrl::Connect(std::string host, unsigned short port)
 {
 	if(m_Socket!=NULL) delete m_Socket;
 	// Connect to DAQctrlServ
-	m_Socket = new TSocket(host.c_str(), 9090);
+	m_Socket = new TSocket(host.c_str(), port);
 	if ((m_Socket<=NULL) || (!m_Socket->IsValid())){
 		m_Socket=NULL;
 		return;
 	}
 	std::cout<<"DAQctrl::Connect(): Connected to "<<host<<std::endl;
 	m_hostname=host;
+	m_port=port;
 	m_ASICs=FetchListOfASICs();
 }
 
@@ -77,7 +78,7 @@ int DAQctrl::CommandRepliesOpCode(std::string cmdstring, ...){
 		Error("DAQctrl::CommandRepliesOpCode()", "error receiving message");
 		do{
 			Error("DAQctrl::CommandRepliesObject()", "Will try to reconnect");
-			Connect(m_hostname);
+			Connect(m_hostname,m_port);
 		}while(!Good());
 		return -1;
 	}
@@ -112,7 +113,7 @@ TObject* DAQctrl::CommandRepliesObject(const TClass* target_obj, std::string cmd
 		Error("DAQctrl::CommandRepliesObject()", "error receiving message");
 		do{
 			Error("DAQctrl::CommandRepliesObject()", "Will try to reconnect");
-			Connect(m_hostname);
+			Connect(m_hostname,m_port);
 		}while(!Good());
 		return obj;
 	}
@@ -152,7 +153,7 @@ std::list<unsigned char> DAQctrl::FetchListOfASICs(){
 		Error("DAQctrl::FetchListOfASICs()", "error receiving message");
 		do{
 			Error("DAQctrl::CommandRepliesObject()", "Will try to reconnect");
-			Connect(m_hostname);
+			Connect(m_hostname,m_port);
 		}while(!Good());
 		return li;
 	}
@@ -188,8 +189,18 @@ void DAQctrl::ReadChipUntilEmpty(int minEvents, int maxEvents){
 void DAQctrl::ReadChipAsyncStart(int usec_sleep, int minEvents,int maxEvents){
 	this->CommandWithAck("readchip-start %d %d %d",usec_sleep,minEvents,maxEvents);
 }
+void DAQctrl::ReadCECAsyncStart(int usec_sleep){
+	this->CommandWithAck("readcec-start %d",usec_sleep);
+}
 void DAQctrl::ReadChipAsyncStop(){
 	this->CommandRepliesOpCode("readchip-stop");
+}
+void DAQctrl::ResetCEC(){
+	this->CommandWithAck("reset cec");
+}
+
+klaus_cec_data* DAQctrl::FetchCEC(){
+	return (klaus_cec_data*)CommandRepliesObject(klaus_cec_data::Class(),"get cec");
 }
 
 ClassImp(DAQctrl);

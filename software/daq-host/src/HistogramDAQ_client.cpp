@@ -9,8 +9,8 @@
 #include "TMessage.h"
 #include "TClass.h"
 
-HistogramDAQ::HistogramDAQ(std::string host):
-	DAQctrl(host),
+HistogramDAQ::HistogramDAQ(std::string host,unsigned short port):
+	DAQctrl(host,port),
 	m_results(NULL),
 	m_ASIC_bound(-1)
 	{}
@@ -30,11 +30,9 @@ void HistogramDAQ::ResetResults(){
 
 
 void HistogramDAQ::FetchResults(){
+	if(m_results!=NULL) delete m_results;
 	HistogrammedResults* res=(HistogrammedResults*)CommandRepliesObject(HistogrammedResults::Class(),"get histos %d", m_ASIC_bound);
-	if(res!=NULL){
-		if(m_results!=NULL) delete m_results;
-		m_results=res;
-	}
+	m_results=res;
 }
 
 ClassImp(HistogramDAQ);

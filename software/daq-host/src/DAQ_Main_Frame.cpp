@@ -42,22 +42,22 @@ void DAQ_Main_Frame::Update_Canvas(){
 		}
 		else if(type==3){   // TDC
 			if(channel>constants::CH_NUM){std::cout<<"Attention: not so many channels"<<std::endl;return;}
-			histDAQ->GetResults()->h_time[channel]->Draw();
-			if(useDefaultRange==false){ histDAQ->GetResults()->h_time[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
+			histDAQ->GetResults()->h_CC[channel]->Draw();
+			if(useDefaultRange==false){ histDAQ->GetResults()->h_CC[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
 		}
 		else if(type==4){   // Channel
 			histDAQ->GetResults()->h_channels->Draw();
 		}
-		else if(type==5){   // ADC_PIPE
-			if(channel>constants::CH_NUM-1){std::cout<<"Attention: not so many channels"<<std::endl;return;}
-			histDAQ->GetResults()->h_ADC_PIPE[channel]->Draw();
-			if(useDefaultRange==false){ histDAQ->GetResults()->h_ADC_PIPE[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
-		}
-		else if(type==6){   // ADC_6b
-			if(channel>constants::CH_NUM-1){std::cout<<"Attention: not so many channels"<<std::endl;return;}
-			histDAQ->GetResults()->h_ADC_6b[channel]->Draw();
-			if(useDefaultRange==false){ histDAQ->GetResults()->h_ADC_6b[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
-		}
+	//	else if(type==5){   // ADC_PIPE
+	//		if(channel>constants::CH_NUM-1){std::cout<<"Attention: not so many channels"<<std::endl;return;}
+	//		histDAQ->GetResults()->h_ADC_PIPE[channel]->Draw();
+	//		if(useDefaultRange==false){ histDAQ->GetResults()->h_ADC_PIPE[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
+	//	}
+	//	else if(type==6){   // ADC_6b
+	//		if(channel>constants::CH_NUM-1){std::cout<<"Attention: not so many channels"<<std::endl;return;}
+	//		histDAQ->GetResults()->h_ADC_6b[channel]->Draw();
+	//		if(useDefaultRange==false){ histDAQ->GetResults()->h_ADC_6b[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
+	//	}
                 // TODO: change the hit-map
 		else if(type==7){   // Channel MAP 
 		 	 h_map->Reset();
@@ -70,21 +70,15 @@ void DAQ_Main_Frame::Update_Canvas(){
 		  	}
 			h_map->Draw("COLZ");
 		}
-		else if(type==8){ // Channel Multiplicity
-			histDAQ->GetResults()->h_multi->Draw();
+		else if(type==8){ // Channel Multiplicity -> T_MC
+			if(channel>constants::CH_NUM){std::cout<<"Attention: not so many channels"<<std::endl;return;}
+			histDAQ->GetResults()->h_MC[channel]->Draw();
+			if(useDefaultRange==false){ histDAQ->GetResults()->h_MC[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
 		}
-		else if(type==9){ // Calibration test
-                        // TODO: add the calibration method here
-			// calibration by smear the two problematic bins with the average of the ajacent two bins
-			for(int i=672;i<1023;i=i+32){
-			  double mean=0.5*(histDAQ->GetResults()->h_ADC_10b[channel]->GetBinContent(i-1)+histDAQ->GetResults()->h_ADC_10b[channel]->GetBinContent(i+2));
-			  double val1 = mean*rnd.Uniform(0.97,1.03);;
-			  double val2 = mean*rnd.Uniform(0.97,1.03);;
-			  histDAQ->GetResults()->h_ADC_10b[channel]->SetBinContent(i,val1);
-			  histDAQ->GetResults()->h_ADC_10b[channel]->SetBinContent(i+1,val2);
-			}
-			histDAQ->GetResults()->h_ADC_10b[channel]->Draw();
-			if(useDefaultRange==false){ histDAQ->GetResults()->h_ADC_10b[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
+		else if(type==9){ // Channel Multiplicity -> T_FC
+			if(channel>constants::CH_NUM){std::cout<<"Attention: not so many channels"<<std::endl;return;}
+			histDAQ->GetResults()->h_FC[channel]->Draw();
+			if(useDefaultRange==false){ histDAQ->GetResults()->h_FC[channel]->GetXaxis()->SetRangeUser(xRangeMin,xRangeMax); }
 		}
 
 		(fEcanvas->GetCanvas())->Update();
@@ -95,7 +89,7 @@ void DAQ_Main_Frame::Update_Canvas(){
 
 
 void DAQ_Main_Frame::Set_HistDAQHost(const char* server){
-	histDAQ = new HistogramDAQ(server);
+	histDAQ = new HistogramDAQ(server,9090);
 	if(!histDAQ->Good()){ printf("DAQ not connected, exiting.\n");return;}
 	histDAQ->FetchResults();
 }
@@ -114,7 +108,7 @@ DAQ_Main_Frame::DAQ_Main_Frame(const TGWindow *p, UInt_t w, UInt_t h)
 	SetCleanup(kDeepCleanup);
 	
 	// make sure that the DNL_COR.root is stored into the same directory as the exectuable program
-	f_cal = new TFile("DNL_COR.root");
+	//f_cal = new TFile("DNL_COR.root");
 
 	// TCanvas on which the picture draw
 	fEcanvas = new TRootEmbeddedCanvas("Ecanvas",this);
@@ -129,13 +123,14 @@ DAQ_Main_Frame::DAQ_Main_Frame(const TGWindow *p, UInt_t w, UInt_t h)
 	datatype->SetTitlePos(TGGroupFrame::kCenter);
 	new	TGRadioButton(datatype,"ADC_10b",1);
 	new	TGRadioButton(datatype,"ADC_12b",2);
-	new	TGRadioButton(datatype,"TDC",3);
+	new	TGRadioButton(datatype,"TDC_CC",3);
 	new	TGRadioButton(datatype,"Channel",4);
-	new	TGRadioButton(datatype,"ADC_PIPE",5);
-	new	TGRadioButton(datatype,"ADC_6b",6);
-	new	TGRadioButton(datatype,"HIT_MAP",7);
-	new	TGRadioButton(datatype,"Multiplicity",8);
-	new	TGRadioButton(datatype,"ADC_CAL",9);
+	//new	TGRadioButton(datatype,"ADC_PIPE",5);
+	//new	TGRadioButton(datatype,"ADC_6b",6);
+	//new	TGRadioButton(datatype,"HIT_MAP",7);
+	//new	TGRadioButton(datatype,"Multiplicity",8);
+	new	TGRadioButton(datatype,"TDC_MC",8);
+	new	TGRadioButton(datatype,"TDC_FC",9);
 	datatype->SetButton(kTextCenterX);
 	datatype->Connect("Pressed(Int_t)","DAQ_Main_Frame",this, "DoDataType(Int_t)");
 	controls->AddFrame(datatype,new TGLayoutHints(kLHintsExpandX));
@@ -185,25 +180,25 @@ DAQ_Main_Frame::DAQ_Main_Frame(const TGWindow *p, UInt_t w, UInt_t h)
 	controls->AddFrame(setRange, new TGLayoutHints(kLHintsExpandX, 0, 0, 0, 5));
 
 	// Set the Pipeline ADC branch displacement
-        useDefaultPipe = true; pipeBranch = 44; pipeBranchDis = 128;
-	TGHorizontalFrame *pipeSet = new TGHorizontalFrame(controls);
+//        useDefaultPipe = true; pipeBranch = 44; pipeBranchDis = 128;
+//	TGHorizontalFrame *pipeSet = new TGHorizontalFrame(controls);
 	// pipeBranch
-	fpipeBranch = new TGNumberEntry(pipeSet,44,7,999, TGNumberEntry::kNESInteger, TGNumberEntry::kNEANonNegative, TGNumberEntry::kNELLimitMinMax,0,63);
-	fpipeBranch->Connect("ValueSet(Long_t)","DAQ_Main_Frame",this, "DoSetPipeBranch()");
-	(fpipeBranch->GetNumberEntry())->Connect("ReturnPressed()","DAQ_Main_Frame",this,"DoSetPipeBranch()");
-	pipeSet->AddFrame(fpipeBranch, new TGLayoutHints(kLHintsExpandX));
+//	fpipeBranch = new TGNumberEntry(pipeSet,44,7,999, TGNumberEntry::kNESInteger, TGNumberEntry::kNEANonNegative, TGNumberEntry::kNELLimitMinMax,0,63);
+//	fpipeBranch->Connect("ValueSet(Long_t)","DAQ_Main_Frame",this, "DoSetPipeBranch()");
+//	(fpipeBranch->GetNumberEntry())->Connect("ReturnPressed()","DAQ_Main_Frame",this,"DoSetPipeBranch()");
+//	pipeSet->AddFrame(fpipeBranch, new TGLayoutHints(kLHintsExpandX));
 	// pipeBranchDistance
-	fpipeBranchDis = new TGNumberEntry(pipeSet,128,7,999, TGNumberEntry::kNESInteger, TGNumberEntry::kNEANonNegative, TGNumberEntry::kNELLimitMinMax,100,150);
-	fpipeBranchDis->Connect("ValueSet(Long_t)","DAQ_Main_Frame",this, "DoSetPipeBranchDis()");
-	(fpipeBranchDis->GetNumberEntry())->Connect("ReturnPressed()","DAQ_Main_Frame",this,"DoSetPipeBranchDis()");
-	pipeSet->AddFrame(fpipeBranchDis, new TGLayoutHints(kLHintsExpandX));
+//	fpipeBranchDis = new TGNumberEntry(pipeSet,128,7,999, TGNumberEntry::kNESInteger, TGNumberEntry::kNEANonNegative, TGNumberEntry::kNELLimitMinMax,100,150);
+//	fpipeBranchDis->Connect("ValueSet(Long_t)","DAQ_Main_Frame",this, "DoSetPipeBranchDis()");
+//	(fpipeBranchDis->GetNumberEntry())->Connect("ReturnPressed()","DAQ_Main_Frame",this,"DoSetPipeBranchDis()");
+//	pipeSet->AddFrame(fpipeBranchDis, new TGLayoutHints(kLHintsExpandX));
 
-	controls->AddFrame(pipeSet, new TGLayoutHints(kLHintsExpandX));
+//	controls->AddFrame(pipeSet, new TGLayoutHints(kLHintsExpandX));
 	
 	// setRangeUser
-	TGTextButton *setPipe = new TGTextButton(controls,"&SetPipeline");
-	setPipe->Connect("Clicked()","DAQ_Main_Frame",this,"DoSetPipe()");
-	controls->AddFrame(setPipe, new TGLayoutHints(kLHintsExpandX, 0, 0, 0, 5));
+//	TGTextButton *setPipe = new TGTextButton(controls,"&SetPipeline");
+//	setPipe->Connect("Clicked()","DAQ_Main_Frame",this,"DoSetPipe()");
+//	controls->AddFrame(setPipe, new TGLayoutHints(kLHintsExpandX, 0, 0, 0, 5));
 
 
 	// exit button
@@ -254,13 +249,14 @@ void DAQ_Main_Frame::DoDataType(Int_t id){
 	type = id;
 	if(type==1) std::cout<<"Select the Data Type to be\t\t ADC_10b"<<std::endl;
 	else if(type==2) std::cout<<"Select the Data Type to be\t\t ADC_12b"<<std::endl;
-	else if(type==3) std::cout<<"Select the Data Type to be\t\t TDC"<<std::endl;
+	else if(type==3) std::cout<<"Select the Data Type to be\t\t TDC_CC"<<std::endl;
 	else if(type==4) std::cout<<"Select the Data Type to be\t\t Channel"<<std::endl;
-	else if(type==5) std::cout<<"Select the Data Type to be\t\t ADC_PIPE"<<std::endl;
-	else if(type==6) std::cout<<"Select the Data Type to be\t\t ADC_6b"<<std::endl;
-	else if(type==7) std::cout<<"Select the Data Type to be\t\t HIT_MAP"<<std::endl;
-	else if(type==8) std::cout<<"Select the Data Type to be\t\t Multiplicity"<<std::endl;
-	else if(type==9) std::cout<<"Select the Data Type to be\t\t ADC_CAL"<<std::endl;
+	//else if(type==5) std::cout<<"Select the Data Type to be\t\t ADC_PIPE"<<std::endl;
+	//else if(type==6) std::cout<<"Select the Data Type to be\t\t ADC_6b"<<std::endl;
+	//else if(type==7) std::cout<<"Select the Data Type to be\t\t HIT_MAP"<<std::endl;
+	//else if(type==8) std::cout<<"Select the Data Type to be\t\t Multiplicity"<<std::endl;
+	else if(type==8) std::cout<<"Select the Data Type to be\t\t TDC_MC"<<std::endl;
+	else if(type==9) std::cout<<"Select the Data Type to be\t\t TDC_FC"<<std::endl;
 	else std::cout<<"Invalid!\t id=\t"<<id<<std::endl;
 	
 }
@@ -272,7 +268,7 @@ void DAQ_Main_Frame::DoStop(){
 
 
 DAQ_Main_Frame::~DAQ_Main_Frame(){
-	f_cal->Close();
+	//f_cal->Close();
        	Cleanup();
 }
 

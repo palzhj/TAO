@@ -13,7 +13,7 @@ class EventListDAQ : public DAQctrl{
 	private:
 		TList* m_res;
 	public:
-		EventListDAQ(std::string host="");
+		EventListDAQ(std::string host,unsigned short port);
 		~EventListDAQ();
 	
 		//Commands

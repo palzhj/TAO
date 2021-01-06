@@ -16,7 +16,7 @@ class HistogramDAQ : public DAQctrl{
 		// move m_results into public for the accessibility of child class
 		HistogrammedResults* m_results;
 
-		HistogramDAQ(std::string host="");
+		HistogramDAQ(std::string host,unsigned short port);
 		~HistogramDAQ();
 		HistogrammedResults* GetResults(){return m_results;};
 		HistogrammedResults** GetResultsPtr(){return &m_results;};
