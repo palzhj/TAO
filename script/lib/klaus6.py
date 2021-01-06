@@ -3,6 +3,7 @@
 # KLauS6
 # author: zhj@ihep.ac.cn
 # 2020-12-30 created
+import sys
 from time import sleep
 import lib
 from lib import rbcp
@@ -17,6 +18,9 @@ EVENT_LEN       = 6
 EMPTY_HEADER    = 0x3F
 NONE_HEADER     = 0x0
 
+def printf(format, *args):
+    sys.stdout.write(format % args)
+
 class klaus6(object):
     def __init__(self, device_address = 0x40 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
         self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
@@ -30,10 +34,12 @@ class klaus6(object):
         # channel number. In this case, after reading this empty event, the DAQ may stop
         # reading further events. In KLauS6, the first byte empty event is given by 0x3F.    
         temp = self.readEvent()
+        events = bytes()
         while ((temp[0] != EMPTY_HEADER)&(temp[0] != NONE_HEADER)):
-            temp += self.readEvent()
-        print (temp)
-        return temp
+            printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
+            events += temp
+            temp = self.readEvent()
+        return events
 
     def read8(self, with_internal_addr = False, internal_addr = 0):
         return self._i2c.read8(with_internal_addr, internal_addr)
