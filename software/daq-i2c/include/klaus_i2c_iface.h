@@ -10,7 +10,7 @@ class	klaus_i2c_iface
 {
 	public:
 
-		klaus_i2c_iface(char *device);
+		klaus_i2c_iface();
 		~klaus_i2c_iface();
 
 		int SetSlaveAddr(unsigned char slave_addr);

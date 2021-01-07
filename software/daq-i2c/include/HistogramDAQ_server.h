@@ -34,11 +34,12 @@ private:
 		int usec_sleep;
 		int usec_sleep_cec;
 	} m_DAQ_options;
-	TMutex m_DAQ_mutex;
+	//TMutex m_DAQ_mutex;
 
 //ASIC interface
 	klaus_i2c_iface& m_iface;
 	std::list<unsigned char> m_ASICs;
+	unsigned char m_ASIC_bound;
 //Parsed raw event data per aquisition (all ASICs in the object)
 	unsigned long m_current_aqu_ID;
 	
@@ -48,12 +49,14 @@ private:
 	//storage of histograms for each ASIC, shared by all connected sockets
 	std::map<unsigned char,HistogrammedResults> m_hist_results;
 
+	TList* m_res;
+	HistogrammedResults* m_results;
 	std::map<int,events_buffer_type> m_EventQueues;
 	std::map<int,klaus_cec_data> m_cec_results;
 //TCP connection
-	TServerSocket *m_Serv;      // server socket
-	TMonitor      *m_Mon;       // socket monitor
-	TList         *m_Sockets;   // list of open spy sockets
+	//TServerSocket *m_Serv;      // server socket
+	//TMonitor      *m_Mon;       // socket monitor
+	//TList         *m_Sockets;   // list of open spy sockets
 
 
 public:
@@ -67,20 +70,55 @@ public:
    void Suspend(bool status);
    void Stop();
 
+   void FetchResults();
+
+   HistogrammedResults* GetResults();
+
 //Get list of accessible ASICs (I2C addresses) from slow-control server
 //The resulting list is stored in m_ASICs, which is reset on call. The number of ASICs reteived from the Server is returned
 //Note: the function will not try to reconnect if the 
-   int  AutoFetchASICList(const char* host);
+   int  AddASICList(long long unsigned int addr);
 //Manually append the ASIC list
    void AppendASICList(char slave_addr);
 //Manually reset the ASIC list
    void ResetASICList();
+
+//reset results
+   void ResetResults();
+
+   void BindTo(unsigned char ASIC){m_ASIC_bound=ASIC;};
+   unsigned char GetBound(){return m_ASIC_bound;};
+
+   void FlushFIFO(int minEvents = 0);
+
+   void ReadChipUntilEmpty(int minEvents = 0, int maxEvents = -1);
+
+   void ReadChipAsyncStart(int usec_sleep = 0, int minEvents = 0, int maxEvents = -1);
+
+   void ReadCECAsyncStart(int usec_sleep = 0);
+
+   void ReadChipAsyncStop();
+
+   void ReadCEC();
+
+   klaus_cec_data* FetchCEC();
+
+   void RegisterQueue(unsigned int buflen, unsigned int prescale);
+
+   void ResetListResults();
+
+   void UpdateParams_12b(int a, int b, int c);
+
+   TList* FetchListResults();
+
+   void ResetCEC();
+
 //Get copy of ASIC list
    std::list<unsigned char> GetASICList(){return m_ASICs;};
 protected:
 //Client request & connection handling
-   void HandleSocket(TSocket *s);
-   void HandleClientRequest(TSocket* s, char* request);
+   //void HandleSocket(unsigned char s);
+   //void HandleClientRequest(unsigned char s);
 //Readchip command
    void ReadChipCmd(int min_chip=0, int max_tot=-1);
    void ReadCECCmd();

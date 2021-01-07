@@ -30,12 +30,12 @@ using namespace std;
 
 
 
-klaus_i2c_iface::klaus_i2c_iface(char *device)
+klaus_i2c_iface::klaus_i2c_iface()
 {
-	if ((m_fd = open(device,O_RDWR)) < 0) {
-  	 	fprintf(stderr,"Error: Could not open file %s\n", device);             
-		return;
-	}
+	//if ((m_fd = open(device,O_RDWR)) < 0) {
+  	// 	fprintf(stderr,"Error: Could not open file %s\n", device);             
+	//	return;
+	//}
 	m_current_chipaddr=0;
 	m_chunksize=20;
 	m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
@@ -44,7 +44,7 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 
 klaus_i2c_iface::~klaus_i2c_iface()
 {
-	close(m_fd);
+	//close(m_fd);
 	free(m_i2c_buf);
 }
 
@@ -58,6 +58,7 @@ void klaus_i2c_iface::SetChunksize(int size){
 
 
 int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
+	/*
 	if(m_current_chipaddr!=slave_addr){
 		// The I2C address 
 		if (ioctl(m_fd,I2C_SLAVE,slave_addr) < 0) {                                         
@@ -67,7 +68,7 @@ int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
 		}
 		m_current_chipaddr = slave_addr;
 		return 1;
-	}
+	}*/
 	return 0;
 }
 int  klaus_i2c_iface::ReadEvents(unsigned char slave_addr, int nevents, std::list<klaus_event>& events, unsigned short current_blockID)
@@ -209,7 +210,7 @@ int klaus_i2c_iface::ReadCEC(unsigned char slave_addr, klaus_cec_data& result){
 
 // Read block of data without addressing
 int klaus_i2c_iface::block_read(int length)
-{
+{/*
 	int ln=0;
 	int pos=0;
 	int len;
@@ -232,18 +233,20 @@ int klaus_i2c_iface::block_read(int length)
 			return pos;
 		}
 	}
-	return len;
+	return len;*/
+	return 0;
 }
 
 
 
 int klaus_i2c_iface::block_write(unsigned char slave_addr, unsigned char reg_addr, unsigned char *buf, int length)
 {
+	/*
 	struct i2c_msg msg[2];
 	struct i2c_ioctl_rdwr_data 
 	{
-		struct i2c_msg *msgs;  /* ptr to array of simple messages */              
-		int nmsgs;             /* number of messages to exchange */ 
+		struct i2c_msg *msgs;  
+		int nmsgs;             
 	} msgst;
 
 	if ( length > (MAX_BLK_SIZE) ) 
@@ -267,13 +270,14 @@ int klaus_i2c_iface::block_write(unsigned char slave_addr, unsigned char reg_add
 	{
 		fprintf(stderr,"Error: Write block transaction failed: %s\n",strerror(errno)); 
 		return 1;
-	}
+	}*/
 	return 0;
 }
 
 // Read block of data with specified register address
 int klaus_i2c_iface::block_read(unsigned char slave_addr, unsigned char reg_addr, unsigned char *buf, int length)
 {
+	/*
 	int ln=0;
 	struct i2c_msg msg[2];
 	struct i2c_ioctl_rdwr_data {
@@ -303,6 +307,7 @@ int klaus_i2c_iface::block_read(unsigned char slave_addr, unsigned char reg_addr
 		fprintf(stderr,"Error: Write block transaction failed: %s\n",strerror(errno)); 
 		return ln;
 	}
-	return ln;
+	return ln; */
+	return 0;
 }
 

@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	int n_read;
 
 	// initialize the i2c inteface
-	klaus_i2c_iface i2c_iface("/dev/i2c-1");
+	klaus_i2c_iface i2c_iface;//("/dev/i2c-1");
 	i2c_iface.SetSlaveAddr(0x40);
 /*
 	for(int i=0; i<5 ;i++){
