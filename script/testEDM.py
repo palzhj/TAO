@@ -1,22 +1,15 @@
+# Read output from Klaus and call EDM
+
 import sys
+
+from lib import klaus6
 from lib import EDM
 from ROOT import TFile
 from ROOT import TTree
 from ROOT import TBranch
 from array import array
 
-from time import sleep
-import sys
-import lib
-from lib import rbcp
-from lib import i2c
-from lib import mux
-from lib import sysmon
-from lib import ucd90xxx
-from lib import gpio
-from lib import spi
-from lib import klaus6
-
+# addresses
 LPC_PORTA_BASE_ADDR = 0x200
 LPC_PORTB_BASE_ADDR = 0x300
 LPC_PMBUS_BASE_ADDR = 0x400
@@ -24,30 +17,32 @@ HPC_PORTA_BASE_ADDR = 0x500
 HPC_PORTB_BASE_ADDR = 0x600
 HPC_PMBUS_BASE_ADDR = 0x700
 
-def printf(format, *args):
-    sys.stdout.write(format % args)
+# command line argument parser
+def get_parser():
+    import argparse
+    parser = argparse.ArgumentParser(description='Run Tao Detector Simulation.')
+    parser.add_argument("--evtmax", type=int, default=10, help='events to be processed')
+    parser.add_argument("--test", default=False, help="test mode using Klaus6_bitflow_test.txt, instead of from output of Klaus6")
+    return parser
 
-device_addr_offset = 0
-#################################################################
-# KLauS6
-KLAUS_ADDR = (0x40+device_addr_offset) << 1
-klaus6 = klaus6.klaus6(KLAUS_ADDR, LPC_PORTA_BASE_ADDR)
+parser = get_parser()
+args = parser.parse_args()
+print(args)
 
-# 1. read a test binary file and get the 1st event
-file = open("Klaus6_bitflow_test.txt", "rb")
-#binary_file = file.read()
-binary_file = klaus6.readEvents()
-file.close()
-
-bytes_first_event = binary_file[0:60]
-
-# 2. feed the first event to EDM class
-first_event = EDM.EDM(bytes_first_event)
-first_event.printHeader()
-first_event.print() # the output is the same as that from the c++ daq-i2c class 
+# Read a test binary file or the output from klaus6
+if args.test: 
+	file = open("Klaus6_bitflow_test.txt", "rb")
+	binary_file = file.read()
+	file.close()
+else:
+	device_addr_offset = 0
+	KLAUS_ADDR = (0x40+device_addr_offset) << 1
+	klaus6 = klaus6.klaus6(KLAUS_ADDR, LPC_PORTA_BASE_ADDR)
+	binary_file = klaus6.readEvents(args.evtmax)
+nbytes = len(binary_file)
 
 # 3. try to read 10 events
-nevent = 10
+nevent = args.evtmax
 
 output = TFile("output.root", "recreate")
 tree = TTree("dump", "dumptree")
@@ -74,8 +69,14 @@ tree.Branch("T_MC",T_MC,"T_MC/I")
 tree.Branch("T_FC",T_FC,"T_FC/I")
 
 for i in range(nevent):
-	bytes_i_event = binary_file[60*i:60*(i+1)]
+	if 6*(i+1) > nbytes:
+		print("WARN: evtmax =",nevent,"but only",i+1,"events available")
+		break
+
+	bytes_i_event = binary_file[6*i:6*(i+1)]
 	i_event = EDM.EDM(bytes_i_event)
+	if i == 0:
+		i_event.printHeader()
 	i_event.print()
 
 	channel    [0]= i_event.channel   
@@ -90,11 +91,6 @@ for i in range(nevent):
 	T_FC       [0]= i_event.T_FC
 	tree.Fill()
 	
-tree.Scan("channel:groupID:channelID:gainsel_evt:ADC_10b:ADC_6b:ADC_PIPE:T_CC:T_MC:T_FC")
+#tree.Scan("channel:groupID:channelID:gainsel_evt:ADC_10b:ADC_6b:ADC_PIPE:T_CC:T_MC:T_FC")
 output.Write()
 output.Close()
-
-# To integrate with klaus6.py:
-# 1. Replace the source of the binary file from test file to the output of klaus6.py: 
-#	 binary_file = klaus6.readEvents()
-# 2. Repeat step 2 and 3

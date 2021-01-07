@@ -28,14 +28,18 @@ class klaus6(object):
     def readEvent(self):
         return self._i2c.readBytes(EVENT_LEN)
 
-    def readEvents(self):
+    def readEvents(self, limit = 100):
         # To inform the I2C master implemented in the DAQ hardware that there is no more
         # event to read, the ASIC will transmit an "empty event" indicated by an unused
         # channel number. In this case, after reading this empty event, the DAQ may stop
         # reading further events. In KLauS6, the first byte empty event is given by 0x3F.    
         temp = self.readEvent()
         events = bytes()
+        cnt = 0
         while ((temp[0] != EMPTY_HEADER)&(temp[0] != NONE_HEADER)):
+            cnt += 1
+            if cnt > limit:
+                break
             printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
             events += temp
             temp = self.readEvent()

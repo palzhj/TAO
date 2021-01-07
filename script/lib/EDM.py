@@ -66,9 +66,9 @@ class EDM(object):
 		mctemp = MC>>1 & 0x03 # align MC according to FC
 		cctemp = (self.T_CC%(1<<19)) >> 1 # align CC according to aligned-MC
 		if MC%2==1 and FC/8==0:
-			mctemp = ((MC/2) + 1)     & 0x03
+			mctemp = int((MC/2) + 1)     & 0x03
 		if MC%2==0 and FC/8==3:
-			mctemp = ((MC/2) - 1 + 4) & 0x03
+			mctemp = int((MC/2) - 1 + 4) & 0x03
 
 		if self.T_CC%2==1 and mctemp==0:
 			cctemp = (cctemp + 1) & 0x1ffff
