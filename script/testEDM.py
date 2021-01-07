@@ -57,16 +57,18 @@ ADC_PIPE = array('i',[0])
 T_CC = array('i',[0])
 T_MC = array('i',[0])
 T_FC = array('i',[0])
-tree.Branch("channel",channel,"channel/I")
-tree.Branch("groupID",groupID,"groupID/I")
-tree.Branch("channelID",channelID,"channelID/I")
-tree.Branch("gainsel_evt",gainsel_evt,"gainsel_evt/I")
-tree.Branch("ADC_10b",ADC_10b,"ADC_10b/I")
-tree.Branch("ADC_6b",ADC_6b,"ADC_6b/I")
-tree.Branch("ADC_PIPE",ADC_PIPE,"ADC_PIPE/I")
-tree.Branch("T_CC",T_CC,"T_CC/I")
-tree.Branch("T_MC",T_MC,"T_MC/I")
-tree.Branch("T_FC",T_FC,"T_FC/I")
+
+# "*/i": i means unsigned int with 32 bit
+tree.Branch("channel",channel,"channel/i")
+tree.Branch("groupID",groupID,"groupID/i")
+tree.Branch("channelID",channelID,"channelID/i")
+tree.Branch("gainsel_evt",gainsel_evt,"gainsel_evt/i")
+tree.Branch("ADC_10b",ADC_10b,"ADC_10b/i")
+tree.Branch("ADC_6b",ADC_6b,"ADC_6b/i")
+tree.Branch("ADC_PIPE",ADC_PIPE,"ADC_PIPE/i")
+tree.Branch("T_CC",T_CC,"T_CC/i")
+tree.Branch("T_MC",T_MC,"T_MC/i")
+tree.Branch("T_FC",T_FC,"T_FC/i")
 
 for i in range(nevent):
 	if 6*(i+1) > nbytes:
