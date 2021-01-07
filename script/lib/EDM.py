@@ -13,15 +13,15 @@ def printf(format, *args):
 
 def mapMC(MC):
 	MCmap = [6,1,2,5,4,3,0,7]
-	return MCmap[MC];
+	return MCmap[MC]
 
 class EDM(object):
 	def __init__(self, bytes_event):
 		self.foffset = 0
 		self.moffset = 1
 
-		self.groupID         =	( bytes_event[0] >> 6 ) & 0x0003;     # evt[0]: (7:6)
-		self.channelID       =	( bytes_event[0] >> 2 ) & 0x000f;     # evt[0]: (5:2)
+		self.groupID         =	( bytes_event[0] >> 6 ) & 0x0003     # evt[0]: (7:6)
+		self.channelID       =	( bytes_event[0] >> 2 ) & 0x000f     # evt[0]: (5:2)
     	    
     	# This is verfied, for T0 channel: groupID=3, channelID=0
 		self.channel = 0xff
@@ -31,13 +31,13 @@ class EDM(object):
 			if self.channelID < 9:
 				self.channel = 9*self.groupID + self.channelID
 
-		self.gainsel_evt	 =	( bytes_event[0] >> 1 ) & 0x0001;     # evt[0]: (1:1)
-		self.ADC_10b         =	((bytes_event[0] << 9 ) & 0x0200) | ((bytes_event[1] << 1) & 0x01fe) | ((bytes_event[2] >> 7) & 0x0001);
-		self.ADC_6b          =	((bytes_event[0] << 5 ) & 0x0020) | ((bytes_event[1] >> 3) & 0x001f);
-		self.ADC_PIPE        =  ((bytes_event[1] << 5 ) & 0x0007) | ((bytes_event[2] >> 3) & 0x001f);
-		self.T_CC            =	((bytes_event[2] <<16 ) &0x70000) | ((bytes_event[3] << 8 )& 0x0ff00) | ((bytes_event[4] << 0)& 0x000ff);
-		self.T_MC			 =  ((bytes_event[5] >> 5 ) & 0x0007);
-		self.T_FC			 =  ((bytes_event[5] << 0 ) & 0x001f);
+		self.gainsel_evt	 =	( bytes_event[0] >> 1 ) & 0x0001     # evt[0]: (1:1)
+		self.ADC_10b         =	((bytes_event[0] << 9 ) & 0x0200) | ((bytes_event[1] << 1) & 0x01fe) | ((bytes_event[2] >> 7) & 0x0001)
+		self.ADC_6b          =	((bytes_event[0] << 5 ) & 0x0020) | ((bytes_event[1] >> 3) & 0x001f)
+		self.ADC_PIPE        =  ((bytes_event[1] << 5 ) & 0x0007) | ((bytes_event[2] >> 3) & 0x001f)
+		self.T_CC            =	((bytes_event[2] <<16 ) &0x70000) | ((bytes_event[3] << 8 )& 0x0ff00) | ((bytes_event[4] << 0)& 0x000ff)
+		self.T_MC			 =  ((bytes_event[5] >> 5 ) & 0x0007)
+		self.T_FC			 =  ((bytes_event[5] << 0 ) & 0x001f)
 
 		self.ADC_10b         = 	1023    -   self.ADC_10b
 		self.ADC_6b          =	63      -   self.ADC_6b
@@ -66,13 +66,13 @@ class EDM(object):
 		mctemp = MC>>1 & 0x03 # align MC according to FC
 		cctemp = (self.T_CC%(1<<19)) >> 1 # align CC according to aligned-MC
 		if MC%2==1 and FC/8==0:
-			mctemp = ((MC/2) + 1)     & 0x03;
+			mctemp = ((MC/2) + 1)     & 0x03
 		if MC%2==0 and FC/8==3:
-			mctemp = ((MC/2) - 1 + 4) & 0x03;
+			mctemp = ((MC/2) - 1 + 4) & 0x03
 
 		if self.T_CC%2==1 and mctemp==0:
-			cctemp = (cctemp + 1) & 0x1ffff;
+			cctemp = (cctemp + 1) & 0x1ffff
 		if self.T_CC%2==0 and mctemp==3:
-			cctemp = (cctemp + (1<<18) - 1) & 0x1ffff;
+			cctemp = (cctemp + (1<<18) - 1) & 0x1ffff
 
-		return (cctemp<<7)+(mctemp<<5)+FC;
+		return (cctemp<<7)+(mctemp<<5)+FC
