@@ -1,6 +1,7 @@
 src/*.o
 Makefile.inc
 *.root
+daq_gui_local
 klaus_i2c_dump
 klaus_i2c_dump_text
 klaus_i2c_daqserver

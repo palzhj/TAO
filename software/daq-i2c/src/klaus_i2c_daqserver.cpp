@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 	}
 
 	// initialize the i2c inteface
-	klaus_i2c_iface i2c_iface(argv[1]);
+	klaus_i2c_iface i2c_iface;
 	i2c_iface.SetChunksize(40);
 	//daq
 	DAQServ histDAQ(i2c_iface);
@@ -41,10 +41,13 @@ int main(int argc, char **argv)
 	histDAQ.AppendASICList(0x21);	
 	histDAQ.AppendASICList(0x22);	
 #else
-	if(argc>2)
-		histDAQ.AutoFetchASICList(argv[2]);
-	else
-		histDAQ.AutoFetchASICList("localhost");
+	//if(argc>2)
+//		histDAQ.AppendASICList(argv[2]);
+//	else
+		//histDAQ.AutoFetchASICList("localhost");
+	        histDAQ.AppendASICList(0x20);	
+	        histDAQ.AppendASICList(0x21);	
+	        histDAQ.AppendASICList(0x22);	
 #endif
 	histDAQ.Run();
 	return 0;

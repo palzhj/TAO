@@ -43,6 +43,8 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 		m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
 		SetSlaveAddr(0x40);
 	} else {
+		m_current_chipaddr=0;
+		m_chunksize=20;
 		m_python_mode = true;
 		m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
 	}
@@ -50,7 +52,7 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 
 klaus_i2c_iface::~klaus_i2c_iface()
 {
-	close(m_fd);
+	//close(m_fd);
 	free(m_i2c_buf);
 }
 
@@ -63,6 +65,7 @@ void klaus_i2c_iface::SetChunksize(int size){
 };
 
 int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
+	/*
 	if(m_current_chipaddr!=slave_addr){
 		// The I2C address 
 		if (ioctl(m_fd,I2C_SLAVE,slave_addr) < 0) {                                         
@@ -72,7 +75,7 @@ int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
 		}
 		m_current_chipaddr = slave_addr;
 		return 1;
-	}
+	}*/
 	return 0;
 }
 
@@ -310,11 +313,12 @@ int klaus_i2c_iface::block_read(int length)
 
 int klaus_i2c_iface::block_write(unsigned char slave_addr, unsigned char reg_addr, unsigned char *buf, int length)
 {
+	/*
 	struct i2c_msg msg[2];
 	struct i2c_ioctl_rdwr_data 
 	{
-		struct i2c_msg *msgs;  /* ptr to array of simple messages */              
-		int nmsgs;             /* number of messages to exchange */ 
+		struct i2c_msg *msgs;  
+		int nmsgs;             
 	} msgst;
 
 	if ( length > (MAX_BLK_SIZE) ) 
@@ -338,13 +342,14 @@ int klaus_i2c_iface::block_write(unsigned char slave_addr, unsigned char reg_add
 	{
 		fprintf(stderr,"Error: Write block transaction failed: %s\n",strerror(errno)); 
 		return 1;
-	}
+	}*/
 	return 0;
 }
 
 // Read block of data with specified register address
 int klaus_i2c_iface::block_read(unsigned char slave_addr, unsigned char reg_addr, unsigned char *buf, int length)
 {
+	/*
 	int ln=0;
 	struct i2c_msg msg[2];
 	struct i2c_ioctl_rdwr_data {
@@ -374,6 +379,7 @@ int klaus_i2c_iface::block_read(unsigned char slave_addr, unsigned char reg_addr
 		fprintf(stderr,"Error: Write block transaction failed: %s\n",strerror(errno)); 
 		return ln;
 	}
-	return ln;
+	return ln; */
+	return 0;
 }
 
