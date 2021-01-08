@@ -30,6 +30,7 @@ void DAQ_Main_Frame_local::Update_Canvas(){
 	if(histDAQ==NULL){return;};	
 	if(stop==0){
 		histDAQ->FetchResults();
+		if(histDAQ->GetResults() == NULL) return;
 		if(type==1){ 	    // ADC_10b 
 			if(channel>constants::CH_NUM-1){std::cout<<"Attention: not so many channels"<<std::endl;return;}
 			histDAQ->GetResults()->h_ADC_10b[channel]->Draw();
@@ -88,15 +89,15 @@ void DAQ_Main_Frame_local::Update_Canvas(){
 }
 
 
-void DAQ_Main_Frame_local::Set_HistDAQHost(klaus_i2c_iface& i2c_iface){
-	histDAQ = new DAQServ(i2c_iface);
+void DAQ_Main_Frame_local::Set_HistDAQHost(){
+	//histDAQ = new DAQServ(i2c_iface);
 	//histDAQ = new HistogramDAQ(server,9090);
 	//if(!histDAQ->Good()){ printf("DAQ not connected, exiting.\n");return;}
-	histDAQ->AppendASICList(0x20);
-        histDAQ->AppendASICList(0x21);
-        histDAQ->AppendASICList(0x22);
-        histDAQ->AppendASICList(0x23);
-	histDAQ->FetchResults();
+	histDAQ->AppendASICList(0);
+        histDAQ->AppendASICList(1);
+        histDAQ->AppendASICList(2);
+        histDAQ->AppendASICList(3);
+	//histDAQ->FetchResults();
 }
 
 void	DAQ_Main_Frame_local::Set_HistDAQASIC(unsigned char ASIC){ 
@@ -106,10 +107,10 @@ void	DAQ_Main_Frame_local::Set_HistDAQASIC(unsigned char ASIC){
 
 void DAQ_Main_Frame_local::DoReset(){ histDAQ->ResetResults(); usleep(0); }
 
-DAQ_Main_Frame_local::DAQ_Main_Frame_local(const TGWindow *p, UInt_t w, UInt_t h)
+DAQ_Main_Frame_local::DAQ_Main_Frame_local(klaus_i2c_iface& i2c_iface, const TGWindow *p, UInt_t w, UInt_t h)
 	:TGMainFrame(p,w,h,kHorizontalFrame){
 
-	histDAQ=NULL;
+	histDAQ=new DAQServ(i2c_iface);
 	channel = 0; type = 4; stop = 0; 
 	xRangeMax = 4096; xRangeMin = 0;
 	useDefaultRange = true;

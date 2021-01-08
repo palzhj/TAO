@@ -101,6 +101,7 @@ DAQServ::DAQServ(klaus_i2c_iface& iface):
    // Create a list to contain all client connections
    //m_Sockets = new TList;
    //TMessage::EnableSchemaEvolutionForAll();
+   RegisterQueue(1000,1);
 }
 
 void DAQServ::Run(){
@@ -131,14 +132,9 @@ void DAQServ::Stop(){
 }
 
 void DAQServ::FetchResults() {
-	RegisterQueue(1000,1);
+	FetchListResults();
 	ReadChipAsyncStart(0,0,-1);
     
-	if(m_hist_results.size() == 0) {
-            printf("DAQServ::FetchResults(): no data received, waiting for data\n");
-	    Suspend(true);
-	}
-
 	if((m_ASIC_bound>=0) && (m_hist_results.find(m_ASIC_bound)==m_hist_results.end())){
             printf("DAQServ::FetchResults(): get histos: ASIC %u not found\n",m_ASIC_bound);
         }else{
@@ -147,7 +143,7 @@ void DAQServ::FetchResults() {
              m_results = &(m_hist_results.begin()->second);
            else
              m_results = &(m_hist_results[m_ASIC_bound]);
-     }
+        }
 }
 
 HistogrammedResults* DAQServ::GetResults() {

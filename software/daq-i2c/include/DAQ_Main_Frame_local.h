@@ -59,7 +59,7 @@ class DAQ_Main_Frame_local: public TGMainFrame{
                 void    DoSetPipe();
 
 	public:
-		DAQ_Main_Frame_local(const TGWindow *p, UInt_t w, UInt_t h);
+		DAQ_Main_Frame_local(klaus_i2c_iface& i2c_iface, const TGWindow *p, UInt_t w, UInt_t h);
 		virtual ~DAQ_Main_Frame_local();
 		void	DoReset();
 		void	DoSetChannel();
@@ -74,7 +74,7 @@ class DAQ_Main_Frame_local: public TGMainFrame{
 
 		//HistogramDAQ*	histDAQ;
 		DAQServ*	histDAQ;
-		void	Set_HistDAQHost(klaus_i2c_iface& iface);
+		void	Set_HistDAQHost();
 		void	Set_HistDAQASIC(unsigned char ASIC);
 
 //		void 	DoDAQ();
