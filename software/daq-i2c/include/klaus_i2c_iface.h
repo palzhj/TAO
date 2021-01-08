@@ -10,7 +10,7 @@ class	klaus_i2c_iface
 {
 	public:
 
-		klaus_i2c_iface(char *device);
+		klaus_i2c_iface(char *device = NULL);
 		~klaus_i2c_iface();
 
 		int SetSlaveAddr(unsigned char slave_addr);
@@ -56,11 +56,12 @@ class	klaus_i2c_iface
 		// Read block of data without specified register address
 		int block_read(int length);
 
-
 		int m_fd;
 		unsigned char m_current_chipaddr;
 		unsigned char* m_i2c_buf;
 		int m_chunksize;
+
+		bool m_python_mode;
 };
 
 

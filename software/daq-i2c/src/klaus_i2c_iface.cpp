@@ -12,6 +12,8 @@
 #include <linux/types.h>
 #include <vector>
 #include <iostream>
+#include <Python.h>
+
 using namespace std;
 
 #define EVT_LEN 6
@@ -28,18 +30,22 @@ using namespace std;
 //#define dprintf(args...) printf(args)
 #define dprintf(args...)
 
-
-
 klaus_i2c_iface::klaus_i2c_iface(char *device)
 {
-	if ((m_fd = open(device,O_RDWR)) < 0) {
-  	 	fprintf(stderr,"Error: Could not open file %s\n", device);             
-		return;
+	if (device != NULL) {
+		if ((m_fd = open(device,O_RDWR)) < 0) {
+  		 	fprintf(stderr,"Error: Could not open file %s\n", device);             
+			return;
+		}
+		m_current_chipaddr=0;
+		m_chunksize=20;
+		m_python_mode = false;
+		m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
+		SetSlaveAddr(0x40);
+	} else {
+		m_python_mode = true;
+		m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
 	}
-	m_current_chipaddr=0;
-	m_chunksize=20;
-	m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
-	SetSlaveAddr(0x40);
 }
 
 klaus_i2c_iface::~klaus_i2c_iface()
@@ -56,7 +62,6 @@ void klaus_i2c_iface::SetChunksize(int size){
 	m_chunksize=size;
 };
 
-
 int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
 	if(m_current_chipaddr!=slave_addr){
 		// The I2C address 
@@ -70,9 +75,10 @@ int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
 	}
 	return 0;
 }
+
 int  klaus_i2c_iface::ReadEvents(unsigned char slave_addr, int nevents, std::list<klaus_event>& events, unsigned short current_blockID)
 {
-	SetSlaveAddr(slave_addr);
+	if (!m_python_mode) SetSlaveAddr(slave_addr);
 	//read buffer
 	if(block_read(EVT_LEN*nevents)<0) return -1;
 	//parse events, only keeping non empty ones
@@ -210,32 +216,97 @@ int klaus_i2c_iface::ReadCEC(unsigned char slave_addr, klaus_cec_data& result){
 // Read block of data without addressing
 int klaus_i2c_iface::block_read(int length)
 {
-	int ln=0;
-	int pos=0;
-	int len;
-	if ( length > (MAX_BLK_SIZE*100000) ) {
-		fprintf(stderr,"Error: Total size too large:\n"); 
-	}	
+	if (!m_python_mode) {
+		int ln=0;
+		int pos=0;
+		int len;
+		if ( length > (MAX_BLK_SIZE*100000) ) {
+			fprintf(stderr,"Error: Total size too large:\n"); 
+		}	
+	
+		while (pos<length){
+			unsigned char* buffer=&m_i2c_buf[pos];
+			if(pos+MAX_BLK_SIZE < length){
+				len = MAX_BLK_SIZE;
+			}else{
+				len = length-pos;
+			}
+			//printf("file discriptor=%d, Reading %d of %d bytes \n",m_fd,len,length);
+			ln = read(m_fd, buffer,len);
+			pos+=ln;
+			if (ln < len) {
+				fprintf(stderr,"Error: Read block transaction failed or finished after %d bytes read: %s\n",ln,strerror(errno)); 
+				return pos;
+			}
+		}
+		return len;
+	} else {
+		if ( length > (MAX_BLK_SIZE*100000) ) {
+			fprintf(stderr,"Error: Total size too large:\n"); 
+		}	
 
-	while (pos<length){
-		unsigned char* buffer=&m_i2c_buf[pos];
-		if(pos+MAX_BLK_SIZE < length){
-			len = MAX_BLK_SIZE;
-		}else{
-			len = length-pos;
+		Py_Initialize();
+		PyRun_SimpleString("import sys");
+		PyRun_SimpleString("sys.path.insert(0, \"/afs/ihep.ac.cn/users/l/liyichen52/klaus/script\")");
+		PyRun_SimpleString("sys.path.insert(0, \"/afs/ihep.ac.cn/users/l/liyichen52/klaus/script/lib\")");
+		PyObject *pName = PyUnicode_FromString("klaus6");
+		PyObject *pModule = PyImport_Import(pName);
+
+		if (pModule == nullptr) {
+			PyErr_Print();
+			std::cerr << "Failed to import the klaus6 module.\n";
+			exit(-1);
 		}
-		//printf("file discriptor=%d, Reading %d of %d bytes \n",m_fd,len,length);
-		ln = read(m_fd, buffer,len);
-		pos+=ln;
-		if (ln < len) {
-			fprintf(stderr,"Error: Read block transaction failed or finished after %d bytes read: %s\n",ln,strerror(errno)); 
-			return pos;
+		Py_DECREF(pName);
+
+		PyObject *pDict = PyModule_GetDict(pModule);
+		if (pDict == nullptr) {
+			PyErr_Print();
+			std::cerr << "Failed to get the dictionary.\n";
+			exit(-1);
 		}
+		Py_DECREF(pModule);
+
+		PyObject* pClass = PyDict_GetItemString(pDict, "klaus6");
+		if (pClass == nullptr) {
+			PyErr_Print();
+			std::cerr << "Failed to get the Python class.\n";
+			exit(-1);
+		}
+		Py_DECREF(pDict);
+
+		PyObject *py_args = PyTuple_New(1);
+		PyTuple_SetItem(py_args, 0, PyLong_FromLong(0xff));
+		PyObject* pClass_inst;
+		if (PyCallable_Check(pClass)) {
+			pClass_inst = PyObject_CallObject(pClass, py_args);
+			//pClass_inst = PyObject_CallObject(pClass, nullptr);
+			Py_DECREF(pClass);
+		} else {
+			std::cout << "Cannot instantiate the Python class" << std::endl;
+			Py_DECREF(pClass);
+			exit(-1);
+		}
+
+		//PyObject_CallMethod(pClass_inst, "readEvents", nullptr);
+		//PyTuple_SetItem(py_args, 0, PyLong_FromLong(length/EVT_LEN));
+		//PyObject *value = PyObject_CallMethod(pClass_inst, "readEvents", "(limit)", length/EVT_LEN);
+		PyObject *value = PyObject_CallMethod(pClass_inst, "readEvents", "(i)", length/EVT_LEN);
+    	if (value)
+			Py_DECREF(value);
+    	else
+ 			PyErr_Print();
+
+		Py_Finalize();
+
+		char* signed_bytes = PyBytes_AsString(value);
+		for (int i = 0; i < length; i++) {
+			m_i2c_buf[i] = (unsigned char)signed_bytes[i];
+		}
+		
+		return 1;
 	}
-	return len;
 }
-
-
 
 int klaus_i2c_iface::block_write(unsigned char slave_addr, unsigned char reg_addr, unsigned char *buf, int length)
 {
