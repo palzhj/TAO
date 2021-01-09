@@ -17,17 +17,33 @@ from lib import gpio
 EVENT_LEN       = 6
 EMPTY_HEADER    = 0x3F
 NONE_HEADER     = 0x0
+LOCAL_TEST      = False
 
 def printf(format, *args):
     sys.stdout.write(format % args)
 
 class klaus6(object):
     def __init__(self, device_address = 0x40 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
-        self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
         self.nevt_read = 0
+        self.ntimes_read = 0
+        self.quiet = False
+        if LOCAL_TEST:
+            self.file = open("/afs/ihep.ac.cn/users/l/liyichen52/klaus/script/Klaus6_bitflow_test.txt", "rb")
+        else:
+            self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
+
+    def beQuiet(self):
+        self.quiet = True
 
     def readEvent(self):
-        return self._i2c.readBytes(EVENT_LEN)
+        if LOCAL_TEST:
+            temp = self.file.read(EVENT_LEN)
+            if temp != bytearray():
+                return temp
+            else:
+                return [0x3F]
+        else:
+            return self._i2c.readBytes(EVENT_LEN)
 
     def readEvents(self, limit = 100):
         # To inform the I2C master implemented in the DAQ hardware that there is no more
@@ -38,7 +54,8 @@ class klaus6(object):
         events = bytes()
         cnt = 0
         while ((temp[0] != EMPTY_HEADER)):
-            printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
+            if not self.quiet:
+                printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
             events += temp
             cnt += 1
 
@@ -48,15 +65,15 @@ class klaus6(object):
             temp = self.readEvent()
 
         self.nevt_read = cnt
+        self.ntimes_read += 1
 
-        f = open('.tmp_klaus6_output.txt', 'wb')
-        f.write(events)
-        f.close()
+        if not self.quiet:
+            print(self.nevt_read, "events read in the", self.ntimes_read, "call of klaus6.readEvents")
+
         return events
 
     def nevtRead(self):
         return self.nevt_read
-
 
     def read8(self, with_internal_addr = False, internal_addr = 0):
         return self._i2c.read8(with_internal_addr, internal_addr)

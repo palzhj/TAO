@@ -41,6 +41,7 @@ class	klaus_i2c_iface
 		//Read the CEC counter of the given slave
 		int ReadCEC(unsigned char slave_addr, klaus_cec_data& result);
 
+		void BeQuiet();
 
 	private:
 
@@ -62,6 +63,8 @@ class	klaus_i2c_iface
 		int m_chunksize;
 
 		bool m_python_mode;
+		bool m_quiet;
+		PyObject* pClass;
 		PyObject* pClass_inst;
 };
 

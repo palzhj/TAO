@@ -21,7 +21,7 @@ using namespace std;
 #define REG_ADDR_LEN 1
 #define MAX_BLK_SIZE 255
 #define MAX_CHUNKS MAX_BLK_SIZE/EVT_LEN
-#define DAQLIMIT_AQULEN 1000
+#define DAQLIMIT_AQULEN 10000
 
 //#define ddprintf(args...) printf(args)
 #define ddprintf(args...)
@@ -31,21 +31,18 @@ using namespace std;
 
 klaus_i2c_iface::klaus_i2c_iface(char *device)
 {
+	m_current_chipaddr=-1;
+	m_chunksize=20;
+	m_quiet = false;
+	m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
 	if (device != NULL) {
+		m_python_mode = false;
 		if ((m_fd = open(device,O_RDWR)) < 0) {
   		 	fprintf(stderr,"Error: Could not open file %s\n", device);             
 			return;
 		}
-		m_current_chipaddr=0;
-		m_chunksize=20;
-		m_python_mode = false;
-		m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
-		SetSlaveAddr(0x40);
 	} else {
-		m_current_chipaddr=0;
-		m_chunksize=20;
 		m_python_mode = true;
-		m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
 
 		Py_Initialize();
 		PyRun_SimpleString("import sys");
@@ -69,24 +66,13 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 		}
 		Py_DECREF(pModule);
 
-		PyObject* pClass = PyDict_GetItemString(pDict, "klaus6");
+		pClass = PyDict_GetItemString(pDict, "klaus6");
 		if (pClass == nullptr) {
 			PyErr_Print();
 			std::cerr << "Failed to get the Python class.\n";
 			exit(-1);
 		}
 		Py_DECREF(pDict);
-
-		PyObject *py_args = PyTuple_New(1);
-		PyTuple_SetItem(py_args, 0, PyLong_FromLong(0x40<<1));
-		if (PyCallable_Check(pClass)) {
-			pClass_inst = PyObject_CallObject(pClass, py_args);
-			Py_DECREF(pClass);
-		} else {
-			std::cout << "Cannot instantiate the Python class" << std::endl;
-			Py_DECREF(pClass);
-			exit(-1);
-		}
 	}
 }
 
@@ -106,36 +92,61 @@ void klaus_i2c_iface::SetChunksize(int size){
 };
 
 int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
-	/*
-	if(m_current_chipaddr!=slave_addr){
-		// The I2C address 
-		if (ioctl(m_fd,I2C_SLAVE,slave_addr) < 0) {                                         
-			fprintf(stderr,"Error: Cannot communicate with slave: %s\n",
-				strerror(errno));
-			return -1;
+	if (!m_python_mode) {
+		if(m_current_chipaddr!=slave_addr){
+			// The I2C address 
+			if (ioctl(m_fd,I2C_SLAVE,slave_addr) < 0) {                                         
+				fprintf(stderr,"Error: Cannot communicate with slave: %s\n",
+					strerror(errno));
+				return -1;
+			}
+			m_current_chipaddr = slave_addr;
+			return 1;
 		}
-		m_current_chipaddr = slave_addr;
-		return 1;
-	}*/
+	} else {
+		if(m_current_chipaddr!=slave_addr){
+			PyObject *py_args = PyTuple_New(1);
+			unsigned char real_slave_addr;
+			if (slave_addr == 0) real_slave_addr = 0x40;
+			PyTuple_SetItem(py_args, 0, PyLong_FromLong(real_slave_addr<<1));
+			if (PyCallable_Check(pClass)) {
+				pClass_inst = PyObject_CallObject(pClass, py_args);
+				Py_DECREF(pClass);
+			} else {
+				std::cout << "Cannot instantiate the Python class" << std::endl;
+				Py_DECREF(pClass);
+				exit(-1);
+			}
+			m_current_chipaddr = slave_addr;
+			return 1;
+		}
+	}
 	return 0;
 }
 
 int  klaus_i2c_iface::ReadEvents(unsigned char slave_addr, int nevents, std::list<klaus_event>& events, unsigned short current_blockID)
 {
-	if (!m_python_mode) SetSlaveAddr(slave_addr);
+	SetSlaveAddr(slave_addr);
+
 	//read buffer
-	if(block_read(EVT_LEN*nevents)<0) return -1;
-	//parse events, only keeping non empty ones
+	int nevt_read = block_read(EVT_LEN*nevents);
+	if (nevt_read < 0) return -1;
+	
+	//convert bytes to event
 	int i=0;
-	for(int n=0;n<nevents;n++)
+	for(int n=0;n<nevt_read;n++)
 	{
-		for (int j=0; j<EVT_LEN; j++) printf("%2.2x ",m_i2c_buf[n*EVT_LEN+j]);
-		printf("\n");
-		//if(m_i2c_buf[n*EVT_LEN]==0xfe)
-		if(m_i2c_buf[n*EVT_LEN]==0x3f)
-		{ //remove empty ones
-			continue;
+		if (!m_quiet) {
+			for (int j=0; j<EVT_LEN; j++) printf("%2.2x ",m_i2c_buf[n*EVT_LEN+j]);
+			printf("\n");
 		}
+
+		// The following check has been done in klaus6.py, thus it's commented out
+		//if(m_i2c_buf[n*EVT_LEN]==0x3f)
+		//{ //remove empty ones
+		//	continue;
+		//}
+		
 		unsigned char* event= &(m_i2c_buf[n*EVT_LEN]);
 		events.push_back(klaus_event(event,current_blockID));
 		i++;
@@ -166,6 +177,7 @@ klaus_acquisition klaus_i2c_iface::ReadEventsUntilEmpty(std::list<unsigned char>
 			}
 
 			events.nEvents+=n;
+			if (!m_quiet) std::cout << events.nEvents << " events read so far for chip " << int(*it) << std::endl;
 
 			//chip empty and enough events read per chip - remove chip from list:
 			if((events.data[*it].size()>=min_chip) && (n<m_chunksize)){
@@ -307,7 +319,6 @@ int klaus_i2c_iface::block_read(int length)
 		for (int i = 0; i < nevt_read*EVT_LEN; i++) {
 			m_i2c_buf[i] = (unsigned char)signed_bytes[i];
 		}
-		//if (nevt_read < nevt_toread) m_i2c_buf[nevt_read*EVT_LEN] = 0x3F;
 	
 		if (nevt_read == 0) return -1;
 		else return nevt_read;
@@ -386,3 +397,8 @@ int klaus_i2c_iface::block_read(unsigned char slave_addr, unsigned char reg_addr
 	return 0;
 }
 
+void klaus_i2c_iface::BeQuiet()
+{
+	m_quiet = true;
+	if (m_python_mode) PyObject_CallMethod(pClass_inst, "beQuiet", nullptr);
+}

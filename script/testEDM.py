@@ -23,22 +23,23 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Run Tao Detector Simulation.')
     parser.add_argument("--evtmax", type=int, default=10, help='events to be processed')
     parser.add_argument("--test", default=False, help="test mode using Klaus6_bitflow_test.txt, instead of from output of Klaus6")
+    parser.add_argument("--quiet", default=False, help="be quiet")
     return parser
 
 parser = get_parser()
 args = parser.parse_args()
 print(args)
 
-# Read a test binary file or the output from klaus6
+# In test mode, read a local binary file
 if args.test: 
-	file = open("Klaus6_bitflow_test.txt", "rb")
-	binary_file = file.read()
-	file.close()
-else:
-	device_addr_offset = 0
-	KLAUS_ADDR = (0x40+device_addr_offset) << 1
-	klaus6 = klaus6.klaus6(KLAUS_ADDR, LPC_PORTA_BASE_ADDR)
-	binary_file = klaus6.readEvents(args.evtmax)
+	klaus6.LOCAL_TEST = True
+
+device_addr_offset = 0
+KLAUS_ADDR = (0x40+device_addr_offset) << 1
+klaus6 = klaus6.klaus6(KLAUS_ADDR, LPC_PORTA_BASE_ADDR)
+if args.quiet:
+	klaus6.beQuiet()
+binary_file = klaus6.readEvents(args.evtmax)
 nbytes = len(binary_file)
 
 # 3. try to read n events
@@ -77,9 +78,10 @@ for i in range(nevent):
 
 	bytes_i_event = binary_file[6*i:6*(i+1)]
 	i_event = EDM.EDM(bytes_i_event)
-	if i == 0:
-		i_event.printHeader()
-	#i_event.print()
+	if not args.quiet:
+		if i == 0:
+			i_event.printHeader()
+		i_event.print()
 
 	channel    [0]= i_event.channel   
 	groupID    [0]= i_event.groupID
