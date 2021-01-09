@@ -24,6 +24,7 @@ def printf(format, *args):
 class klaus6(object):
     def __init__(self, device_address = 0x40 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
         self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
+        self.nevt_read = 0
 
     def readEvent(self):
         return self._i2c.readBytes(EVENT_LEN)
@@ -34,19 +35,28 @@ class klaus6(object):
         # channel number. In this case, after reading this empty event, the DAQ may stop
         # reading further events. In KLauS6, the first byte empty event is given by 0x3F.    
         temp = self.readEvent()
+        events = bytes()
         cnt = 0
-        while ((temp[0] != EMPTY_HEADER)&(temp[0] != NONE_HEADER)):
-            cnt += 1
-            if cnt > limit:
-                break
+        while ((temp[0] != EMPTY_HEADER)):
             printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
             events += temp
+            cnt += 1
+
+            if cnt >= limit:
+                break
+
             temp = self.readEvent()
+
+        self.nevt_read = cnt
 
         f = open('.tmp_klaus6_output.txt', 'wb')
         f.write(events)
         f.close()
         return events
+
+    def nevtRead(self):
+        return self.nevt_read
+
 
     def read8(self, with_internal_addr = False, internal_addr = 0):
         return self._i2c.read8(with_internal_addr, internal_addr)

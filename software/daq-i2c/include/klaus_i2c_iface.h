@@ -4,7 +4,7 @@
 #include "EventType.h"
 #include <list>
 #include <iostream>
-
+#include <python3.6m/Python.h>
 
 class	klaus_i2c_iface
 {
@@ -62,6 +62,7 @@ class	klaus_i2c_iface
 		int m_chunksize;
 
 		bool m_python_mode;
+		PyObject* pClass_inst;
 };
 
 

@@ -12,7 +12,6 @@
 #include <linux/types.h>
 #include <vector>
 #include <iostream>
-#include <Python.h>
 
 using namespace std;
 
@@ -47,12 +46,54 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 		m_chunksize=20;
 		m_python_mode = true;
 		m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
+
+		Py_Initialize();
+		PyRun_SimpleString("import sys");
+		PyRun_SimpleString("sys.path.insert(0, \"../../script\")");
+		PyRun_SimpleString("sys.path.insert(0, \"../../script/lib\")");
+		PyObject *pName = PyUnicode_FromString("klaus6");
+		PyObject *pModule = PyImport_Import(pName);
+
+		if (pModule == nullptr) {
+			PyErr_Print();
+			std::cerr << "Failed to import the klaus6 module.\n";
+			exit(-1);
+		}
+		Py_DECREF(pName);
+
+		PyObject *pDict = PyModule_GetDict(pModule);
+		if (pDict == nullptr) {
+			PyErr_Print();
+			std::cerr << "Failed to get the dictionary.\n";
+			exit(-1);
+		}
+		Py_DECREF(pModule);
+
+		PyObject* pClass = PyDict_GetItemString(pDict, "klaus6");
+		if (pClass == nullptr) {
+			PyErr_Print();
+			std::cerr << "Failed to get the Python class.\n";
+			exit(-1);
+		}
+		Py_DECREF(pDict);
+
+		PyObject *py_args = PyTuple_New(1);
+		PyTuple_SetItem(py_args, 0, PyLong_FromLong(0x40<<1));
+		if (PyCallable_Check(pClass)) {
+			pClass_inst = PyObject_CallObject(pClass, py_args);
+			Py_DECREF(pClass);
+		} else {
+			std::cout << "Cannot instantiate the Python class" << std::endl;
+			Py_DECREF(pClass);
+			exit(-1);
+		}
 	}
 }
 
 klaus_i2c_iface::~klaus_i2c_iface()
 {
-	//close(m_fd);
+	if (m_python_mode) Py_Finalize();
+	else close(m_fd);
 	free(m_i2c_buf);
 }
 
@@ -248,66 +289,28 @@ int klaus_i2c_iface::block_read(int length)
 			fprintf(stderr,"Error: Total size too large:\n"); 
 		}	
 
-		Py_Initialize();
-		PyRun_SimpleString("import sys");
-		PyRun_SimpleString("sys.path.insert(0, \"/afs/ihep.ac.cn/users/l/liyichen52/klaus/script\")");
-		PyRun_SimpleString("sys.path.insert(0, \"/afs/ihep.ac.cn/users/l/liyichen52/klaus/script/lib\")");
-		PyObject *pName = PyUnicode_FromString("klaus6");
-		PyObject *pModule = PyImport_Import(pName);
-
-		if (pModule == nullptr) {
-			PyErr_Print();
-			std::cerr << "Failed to import the klaus6 module.\n";
-			exit(-1);
-		}
-		Py_DECREF(pName);
-
-		PyObject *pDict = PyModule_GetDict(pModule);
-		if (pDict == nullptr) {
-			PyErr_Print();
-			std::cerr << "Failed to get the dictionary.\n";
-			exit(-1);
-		}
-		Py_DECREF(pModule);
-
-		PyObject* pClass = PyDict_GetItemString(pDict, "klaus6");
-		if (pClass == nullptr) {
-			PyErr_Print();
-			std::cerr << "Failed to get the Python class.\n";
-			exit(-1);
-		}
-		Py_DECREF(pDict);
-
-		PyObject *py_args = PyTuple_New(1);
-		PyTuple_SetItem(py_args, 0, PyLong_FromLong(0xff));
-		PyObject* pClass_inst;
-		if (PyCallable_Check(pClass)) {
-			pClass_inst = PyObject_CallObject(pClass, py_args);
-			//pClass_inst = PyObject_CallObject(pClass, nullptr);
-			Py_DECREF(pClass);
-		} else {
-			std::cout << "Cannot instantiate the Python class" << std::endl;
-			Py_DECREF(pClass);
-			exit(-1);
-		}
-
-		//PyObject_CallMethod(pClass_inst, "readEvents", nullptr);
-		//PyTuple_SetItem(py_args, 0, PyLong_FromLong(length/EVT_LEN));
-		//PyObject *value = PyObject_CallMethod(pClass_inst, "readEvents", "(limit)", length/EVT_LEN);
-		PyObject *value = PyObject_CallMethod(pClass_inst, "readEvents", "(i)", length/EVT_LEN);
+		int nevt_toread = length/EVT_LEN;
+		PyObject *value = PyObject_CallMethod(pClass_inst, "readEvents", "(i)", nevt_toread);
     	if (value)
 			Py_DECREF(value);
     	else
  			PyErr_Print();
-
-		Py_Finalize();
+		
+		PyObject *value2 = PyObject_CallMethod(pClass_inst, "nevtRead", nullptr);
+    	if (value2)
+			Py_DECREF(value2);
+    	else
+ 			PyErr_Print();
 
 		char* signed_bytes = PyBytes_AsString(value);
-		for (int i = 0; i < length; i++) {
+		int nevt_read = PyLong_AsLong(value2);
+		for (int i = 0; i < nevt_read*EVT_LEN; i++) {
 			m_i2c_buf[i] = (unsigned char)signed_bytes[i];
 		}
-		
-		return 1;
+		//if (nevt_read < nevt_toread) m_i2c_buf[nevt_read*EVT_LEN] = 0x3F;
+	
+		if (nevt_read == 0) return -1;
+		else return nevt_read;
 	}
 }
 

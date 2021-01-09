@@ -41,7 +41,7 @@ else:
 	binary_file = klaus6.readEvents(args.evtmax)
 nbytes = len(binary_file)
 
-# 3. try to read 10 events
+# 3. try to read n events
 nevent = args.evtmax
 
 output = TFile("output.root", "recreate")
@@ -71,7 +71,7 @@ tree.Branch("T_MC",T_MC,"T_MC/i")
 tree.Branch("T_FC",T_FC,"T_FC/i")
 
 for i in range(nevent):
-	if 6*(i+1) > nbytes:
+	if 6*(i+1) > nbytes-1:
 		print("WARN: evtmax =",nevent,"but only",i+1,"events available")
 		break
 
@@ -79,7 +79,7 @@ for i in range(nevent):
 	i_event = EDM.EDM(bytes_i_event)
 	if i == 0:
 		i_event.printHeader()
-	i_event.print()
+	#i_event.print()
 
 	channel    [0]= i_event.channel   
 	groupID    [0]= i_event.groupID
