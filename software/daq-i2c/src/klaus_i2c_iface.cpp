@@ -19,9 +19,10 @@ using namespace std;
 #define CEC_LEN 41
 #define CEC_ADDR 2
 #define REG_ADDR_LEN 1
-#define MAX_BLK_SIZE 255
+//#define MAX_BLK_SIZE 2550
+#define MAX_BLK_SIZE 3000
 #define MAX_CHUNKS MAX_BLK_SIZE/EVT_LEN
-#define DAQLIMIT_AQULEN 10000
+#define DAQLIMIT_AQULEN 500
 
 //#define ddprintf(args...) printf(args)
 #define ddprintf(args...)
@@ -32,8 +33,8 @@ using namespace std;
 klaus_i2c_iface::klaus_i2c_iface(char *device)
 {
 	m_current_chipaddr=-1;
-	m_chunksize=20;
-	m_quiet = false;
+	m_chunksize=500;
+	m_quiet = true;
 	m_i2c_buf=(unsigned char*) malloc(MAX_BLK_SIZE);
 	if (device != NULL) {
 		m_python_mode = false;
@@ -56,7 +57,7 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 			std::cerr << "Failed to import the klaus6 module.\n";
 			exit(-1);
 		}
-		Py_DECREF(pName);
+		//Py_DECREF(pName);
 
 		PyObject *pDict = PyModule_GetDict(pModule);
 		if (pDict == nullptr) {
@@ -64,7 +65,7 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 			std::cerr << "Failed to get the dictionary.\n";
 			exit(-1);
 		}
-		Py_DECREF(pModule);
+		//Py_DECREF(pModule);
 
 		pClass = PyDict_GetItemString(pDict, "klaus6");
 		if (pClass == nullptr) {
@@ -72,7 +73,7 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 			std::cerr << "Failed to get the Python class.\n";
 			exit(-1);
 		}
-		Py_DECREF(pDict);
+		//Py_DECREF(pDict);
 	}
 }
 
@@ -177,7 +178,8 @@ klaus_acquisition klaus_i2c_iface::ReadEventsUntilEmpty(std::list<unsigned char>
 			}
 
 			events.nEvents+=n;
-			if (!m_quiet) std::cout << events.nEvents << " events read so far for chip " << int(*it) << std::endl;
+			//if (!m_quiet) std::cout << events.nEvents << " events read so far for chip " << int(*it) << std::endl;
+			std::cout << events.nEvents << " events read so far for chip " << int(*it) << std::endl;
 
 			//chip empty and enough events read per chip - remove chip from list:
 			if((events.data[*it].size()>=min_chip) && (n<m_chunksize)){
@@ -301,16 +303,16 @@ int klaus_i2c_iface::block_read(int length)
 			fprintf(stderr,"Error: Total size too large:\n"); 
 		}	
 
-		int nevt_toread = length/EVT_LEN;
+		int nevt_toread = (int) length/EVT_LEN;
 		PyObject *value = PyObject_CallMethod(pClass_inst, "readEvents", "(i)", nevt_toread);
     	if (value)
-			Py_DECREF(value);
+			;//Py_DECREF(value);
     	else
  			PyErr_Print();
 		
 		PyObject *value2 = PyObject_CallMethod(pClass_inst, "nevtRead", nullptr);
     	if (value2)
-			Py_DECREF(value2);
+			;//Py_DECREF(value2);
     	else
  			PyErr_Print();
 

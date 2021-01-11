@@ -101,6 +101,11 @@ DAQServ::DAQServ(klaus_i2c_iface& iface):
    // Create a list to contain all client connections
    //m_Sockets = new TList;
    //TMessage::EnableSchemaEvolutionForAll();
+   m_DAQ_options.min_chip = 0;
+   m_DAQ_options.max_tot = -1;
+   m_DAQ_options.usec_sleep = 0.1;
+   m_DAQ_options.usec_sleep_cec = 0.1;
+                
    RegisterQueue(1000,1);
 }
 
