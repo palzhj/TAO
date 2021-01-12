@@ -19,10 +19,10 @@ using namespace std;
 #define CEC_LEN 41
 #define CEC_ADDR 2
 #define REG_ADDR_LEN 1
-//#define MAX_BLK_SIZE 2550
+//#define MAX_BLK_SIZE 255
 #define MAX_BLK_SIZE 3000
 #define MAX_CHUNKS MAX_BLK_SIZE/EVT_LEN
-#define DAQLIMIT_AQULEN 500
+#define DAQLIMIT_AQULEN 1000
 
 //#define ddprintf(args...) printf(args)
 #define ddprintf(args...)
@@ -74,13 +74,14 @@ klaus_i2c_iface::klaus_i2c_iface(char *device)
 			exit(-1);
 		}
 		//Py_DECREF(pDict);
+	        //SetSlaveAddr(0);
 	}
 }
 
 klaus_i2c_iface::~klaus_i2c_iface()
 {
-	if (m_python_mode) Py_Finalize();
-	else close(m_fd);
+	//if (m_python_mode) Py_Finalize();
+	//else close(m_fd);
 	free(m_i2c_buf);
 }
 
@@ -112,10 +113,10 @@ int klaus_i2c_iface::SetSlaveAddr(unsigned char slave_addr){
 			PyTuple_SetItem(py_args, 0, PyLong_FromLong(real_slave_addr<<1));
 			if (PyCallable_Check(pClass)) {
 				pClass_inst = PyObject_CallObject(pClass, py_args);
-				Py_DECREF(pClass);
+				//Py_DECREF(pClass);
 			} else {
 				std::cout << "Cannot instantiate the Python class" << std::endl;
-				Py_DECREF(pClass);
+				//Py_DECREF(pClass);
 				exit(-1);
 			}
 			m_current_chipaddr = slave_addr;

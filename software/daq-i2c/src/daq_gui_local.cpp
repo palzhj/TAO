@@ -37,12 +37,8 @@ int main(int argc, char **argv)
 	}
 
 	klaus_i2c_iface i2c_iface;
-        i2c_iface.SetChunksize(40);
 
 	DAQ_Main_Frame_local *gui = new DAQ_Main_Frame_local(i2c_iface, gClient->GetRoot(),200,200);
-
-        //daq
-        //DAQServ histDAQ(i2c_iface);
 
 	gui->Set_HistDAQHost();
 	gui->Set_HistDAQASIC(atoi(argv[1]));
