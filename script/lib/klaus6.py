@@ -17,7 +17,7 @@ from lib import gpio
 EVENT_LEN       = 6
 EMPTY_HEADER    = 0x3F
 NONE_HEADER     = 0x0
-LOCAL_TEST      = False
+LOCAL_TEST      = True
 
 def printf(format, *args):
     sys.stdout.write(format % args)
@@ -53,7 +53,19 @@ class klaus6(object):
         temp = self.readEvent()
         events = bytes()
         cnt = 0
-        while ((temp[0] != EMPTY_HEADER)):
+        nsleep = 0
+        while (True):
+            # previous stop condition: if an empty header appears, stop reading
+            # new stop condition: if an empty header appears, sleep for 0.1s and retry, if still empty, then stop
+            if temp[0] == EMPTY_HEADER: 
+                if nsleep == 0:
+                    sleep(0.1)
+                    temp = self.readEvent()
+                    nsleep = 1
+                    continue
+                else:
+                    break
+
             if not self.quiet:
                 printf ("0x%02x%02x_%02x%02x%02x%02x\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
             events += temp
