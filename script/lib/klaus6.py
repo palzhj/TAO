@@ -17,7 +17,7 @@ from lib import gpio
 EVENT_LEN       = 6
 EMPTY_HEADER    = 0x3F
 NONE_HEADER     = 0x0
-LOCAL_TEST      = True
+LOCAL_TEST      = False
 
 def printf(format, *args):
     sys.stdout.write(format % args)
