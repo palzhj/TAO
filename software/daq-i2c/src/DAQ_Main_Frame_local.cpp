@@ -94,9 +94,9 @@ void DAQ_Main_Frame_local::Set_HistDAQHost(){
 	//histDAQ = new HistogramDAQ(server,9090);
 	//if(!histDAQ->Good()){ printf("DAQ not connected, exiting.\n");return;}
 	histDAQ->AppendASICList(0);
-        histDAQ->AppendASICList(1);
-        histDAQ->AppendASICList(2);
-        histDAQ->AppendASICList(3);
+        //histDAQ->AppendASICList(1);
+        //histDAQ->AppendASICList(2);
+        //histDAQ->AppendASICList(3);
 	//histDAQ->FetchResults();
 }
 

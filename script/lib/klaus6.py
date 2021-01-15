@@ -26,7 +26,7 @@ class klaus6(object):
     def __init__(self, device_address = 0x40 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
         self.nevt_read = 0
         self.ntimes_read = 0
-        self.quiet = False
+        self.quiet = True
         if LOCAL_TEST:
             self.file = open("/afs/ihep.ac.cn/users/l/liyichen52/klaus/script/Klaus6_bitflow_test.txt", "rb")
         else:
@@ -45,7 +45,7 @@ class klaus6(object):
         else:
             return self._i2c.readBytes(EVENT_LEN)
 
-    def readEvents(self, limit = 100):
+    def readEvents(self, limit = 1000):
         # To inform the I2C master implemented in the DAQ hardware that there is no more
         # event to read, the ASIC will transmit an "empty event" indicated by an unused
         # channel number. In this case, after reading this empty event, the DAQ may stop

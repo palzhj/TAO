@@ -101,7 +101,12 @@ DAQServ::DAQServ(klaus_i2c_iface& iface):
    // Create a list to contain all client connections
    //m_Sockets = new TList;
    //TMessage::EnableSchemaEvolutionForAll();
-   RegisterQueue(1000,1);
+   m_DAQ_options.min_chip = 0;
+   m_DAQ_options.max_tot = -1;
+   m_DAQ_options.usec_sleep = 0;
+   m_DAQ_options.usec_sleep_cec = 0;
+                
+   RegisterQueue(2000,1);
 }
 
 void DAQServ::Run(){
@@ -132,7 +137,7 @@ void DAQServ::Stop(){
 }
 
 void DAQServ::FetchResults() {
-	FetchListResults();
+	//FetchListResults();
 	ReadChipAsyncStart(0,0,-1);
     
 	if((m_ASIC_bound>=0) && (m_hist_results.find(m_ASIC_bound)==m_hist_results.end())){
@@ -181,7 +186,7 @@ void DAQServ::ReadChipAsyncStart(int usec_sleep, int minEvents,int maxEvents) {
            m_DAQ_thread=new TThread("DAQ",::ReadChipThreadStart,(void*) this);
            m_DAQ_thread->Run();
         }else{
-           printf("DAQServ::ReadChipAsyncStart(): readchip-start request: Already running\n");
+           dprintf("DAQServ::ReadChipAsyncStart(): readchip-start request: Already running\n");
         }
 }
 
