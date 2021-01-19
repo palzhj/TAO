@@ -68,7 +68,7 @@ class spi(object):
 
     def readBytes(self, length = 1):
         if(length>MAX_BUFFER_LEN):
-            raise ValueError("The data buffer is 200 bytes deep!")
+            raise ValueError("The data buffer is "+str(MAX_BUFFER_LEN)+" bytes deep!")
         else:
             return self._i2c.readBytes(length)
 
@@ -87,3 +87,24 @@ class spi(object):
             # print(data[send_len:])
         sleep(0.1)
         self.cs_high()
+
+    def writeRead(self, data):
+        self.cs_low()
+        length = len(data)
+        send_len = 0
+        rxbutter = bytearray()
+        while length >= MAX_BUFFER_LEN:
+            self._i2c.writeBytes(data[send_len:send_len+MAX_BUFFER_LEN], True, 0x0F)
+            # print(data[send_len:send_len+MAX_BUFFER_LEN])
+            sleep(0.1)
+            send_len += MAX_BUFFER_LEN
+            length -= MAX_BUFFER_LEN
+            rxbutter += self._i2c.readBytes(MAX_BUFFER_LEN)
+        if(length):
+            self._i2c.writeBytes(data[send_len:], True, 0x0F)
+            sleep(0.1)
+            # print(data[send_len:])
+            rxbutter += self._i2c.readBytes(length)
+        sleep(0.1)
+        self.cs_high()
+        return rxbutter
