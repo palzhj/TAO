@@ -814,9 +814,11 @@ class TGui:
             except Exception:
                 tk.messagebox.showinfo("Error", "Device is not connected")
                 return
-            self.button_config['text'] = 'Config ASIC'
+            self.button_config['text'] = 'Re-config ASIC'
             self.button_data["state"] = "normal"
             self.ifac.status = 1
+        # reset digital
+        self.ifac.reset()
         self.update_bitcode()
         bits = self.configuration.Writebitcode()  
         try:      

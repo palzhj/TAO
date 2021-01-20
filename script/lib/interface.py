@@ -91,14 +91,19 @@ class interface:
         self.gpio.cal_sel_reset() # select INT
         self.gpio.acq_en_reset()
         self.gpio.rst_set()
-        sleep(0.5)
+        sleep(0.2)
         self.gpio.rst_reset()
-        sleep(0.5)
+        sleep(0.1)
         self.gpio.srst_set()
-        sleep(0.5)
+        sleep(0.2)
         self.gpio.srst_reset()
         sleep(0.1)
-        
+    
+    def reset_digital(self):
+        self.gpio.srst_set()
+        sleep(0.2)
+        self.gpio.srst_reset()
+        sleep(0.1)            
 
     def print(self):
         # firmware info
