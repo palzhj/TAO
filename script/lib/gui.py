@@ -95,9 +95,9 @@ class TGui:
         #####################################################################
         tabCH = tk.Frame()
         notebook.add(tabCH, text='Channels')
-        tabCH.grid_columnconfigure(0, minsize=200)
-        tabCH.grid_columnconfigure(4, minsize=200)
-        tabCH.grid_columnconfigure(9, minsize=150)
+        tabCH.grid_columnconfigure(0, minsize=100)
+        tabCH.grid_columnconfigure(4, minsize=100)
+        tabCH.grid_columnconfigure(9, minsize=80)
         GBcolumnspan = 10
         tk.Label(tabCH, font="bold", text='Channel Flags').grid(row=0, column=0, columnspan=GBcolumnspan//2)
         tk.Label(tabCH, font="bold", text='Output & Dynamic range selection').grid(row=0, column=GBcolumnspan//2, columnspan=GBcolumnspan//2)
@@ -364,6 +364,7 @@ class TGui:
         self.elements[108].value = tk.IntVar(self.elements[108].master) # channel/sw_triodesel
         self.elements[109].value = tk.StringVar(self.elements[109].master) # channel/vDAC_SiPM
 
+        self.button_channel_all = []
         # location and identity
         # digital/clk_div_sel
         self.elements[0].identity  = tk.Scale(self.elements[0].master, variable = self.elements[0].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True) 
@@ -616,82 +617,104 @@ class TGui:
         self.elements[88].identity  = tk.Scale(self.elements[88].master, variable = self.elements[88].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[88].row = 1
         self.elements[88].column = 1
+        self.button_channel_all.append(tk.Button(self.elements[88].master, text='To All', width=6, command=lambda: self.apply_to_all(88)))
         # channel/ADC_PIPEamp_comp_ena
         self.elements[89].identity  = tk.Scale(self.elements[89].master, variable = self.elements[89].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[89].row = 12
-        self.elements[89].column = 1  
+        self.elements[89].column = 1 
+        self.button_channel_all.append(tk.Button(self.elements[89].master, text='To All', width=6, command=lambda: self.apply_to_all(89))) 
         # channel/ADC_PIPEamp_comp_dac
         self.elements[90].identity  = tk.Spinbox(self.elements[90].master, textvariable = self.elements[90].value, width=4, from_=0, to=15)  
         self.elements[90].row = 13
-        self.elements[90].column = 1   
+        self.elements[90].column = 1  
+        self.button_channel_all.append(tk.Button(self.elements[90].master, text='To All', width=6, command=lambda: self.apply_to_all(90))) 
         # __filler
         self.elements[91].identity  = 0 
+        self.button_channel_all.append(tk.Button(self.elements[91].master, text='To All', width=6, command=lambda: self.apply_to_all(91)))
         # __filler
         self.elements[92].identity  = 0 
+        self.button_channel_all.append(tk.Button(self.elements[92].master, text='To All', width=6, command=lambda: self.apply_to_all(92)))
         # channel/ADC_captrim
         self.elements[93].identity  = tk.Spinbox(self.elements[93].master, textvariable = self.elements[93].value, width=4, from_=0, to=15)  
         self.elements[93].row = 14
-        self.elements[93].column = 1   
+        self.elements[93].column = 1  
+        self.button_channel_all.append(tk.Button(self.elements[93].master, text='To All', width=6, command=lambda: self.apply_to_all(93))) 
         # channel/trigger_th_finetune
         self.elements[94].identity  = tk.Spinbox(self.elements[94].master, textvariable = self.elements[94].value, width=4, from_=0, to=15)  
         self.elements[94].row = 8
         self.elements[94].column = 6  
+        self.button_channel_all.append(tk.Button(self.elements[94].master, text='To All', width=6, command=lambda: self.apply_to_all(94)))
         # channel/gainsel_busy_enable
         self.elements[95].identity  = tk.Scale(self.elements[95].master, variable = self.elements[95].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[95].row = 13
         self.elements[95].column = 6   
+        self.button_channel_all.append(tk.Button(self.elements[95].master, text='To All', width=6, command=lambda: self.apply_to_all(95)))
         # channel/hold_delay_finetune
         self.elements[96].identity  = tk.Spinbox(self.elements[96].master, textvariable = self.elements[96].value, width=4, from_=0, to=15)  
         self.elements[96].row = 9
-        self.elements[96].column = 6   
+        self.elements[96].column = 6  
+        self.button_channel_all.append(tk.Button(self.elements[96].master, text='To All', width=6, command=lambda: self.apply_to_all(96))) 
         # channel/branch_sel_config
         self.elements[97].identity  = tk.Spinbox(self.elements[97].master, textvariable = self.elements[97].value, width=14, from_=0, to=3)  
         self.elements[97].row = 1
-        self.elements[97].column = 6   
+        self.elements[97].column = 6  
+        self.button_channel_all.append(tk.Button(self.elements[97].master, text='To All', width=6, command=lambda: self.apply_to_all(97))) 
         # channel/ext_trigger_select
         self.elements[98].identity = tk.Scale(self.elements[98].master, variable = self.elements[98].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[98].row = 2
-        self.elements[98].column = 1 
+        self.elements[98].column = 1
+        self.button_channel_all.append(tk.Button(self.elements[98].master, text='To All', width=6, command=lambda: self.apply_to_all(98))) 
         # __filler
         self.elements[99].identity = 0 
+        self.button_channel_all.append(tk.Button(self.elements[99].master, text='To All', width=6, command=lambda: self.apply_to_all(99)))
         # channel/HG_scale_select
         self.elements[100].identity = tk.Scale(self.elements[100].master, variable = self.elements[100].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[100].row = 3
-        self.elements[100].column = 6  
+        self.elements[100].column = 6 
+        self.button_channel_all.append(tk.Button(self.elements[100].master, text='To All', width=6, command=lambda: self.apply_to_all(100))) 
         # channel/ADC_in_n_select
         self.elements[101].identity = tk.Scale(self.elements[101].master, variable = self.elements[101].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[101].row = 2
-        self.elements[101].column = 6  
+        self.elements[101].column = 6 
+        self.button_channel_all.append(tk.Button(self.elements[101].master, text='To All', width=6, command=lambda: self.apply_to_all(101))) 
         # channel/lfota_disable
         self.elements[102].identity = tk.Scale(self.elements[102].master, variable = self.elements[102].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[102].row = 14
         self.elements[102].column = 6   
+        self.button_channel_all.append(tk.Button(self.elements[102].master, text='To All', width=6, command=lambda: self.apply_to_all(102)))
         # channel/monitor_HG_disable
         self.elements[103].identity = tk.Scale(self.elements[103].master, variable = self.elements[103].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[103].row = 3
         self.elements[103].column = 1  
+        self.button_channel_all.append(tk.Button(self.elements[103].master, text='To All', width=6, command=lambda: self.apply_to_all(103)))
         # channel/monitor_LG_disable
         self.elements[104].identity = tk.Scale(self.elements[104].master, variable = self.elements[104].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[104].row = 4
-        self.elements[104].column = 1  
+        self.elements[104].column = 1 
+        self.button_channel_all.append(tk.Button(self.elements[104].master, text='To All', width=6, command=lambda: self.apply_to_all(104))) 
         # channel/trigger_LSB_scale
         self.elements[105].identity = tk.Scale(self.elements[105].master, variable = self.elements[105].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[105].row = 7
         self.elements[105].column = 6  
+        self.button_channel_all.append(tk.Button(self.elements[105].master, text='To All', width=6, command=lambda: self.apply_to_all(105)))
         # channel/LG_scale_select
         self.elements[106].identity = tk.Scale(self.elements[106].master, variable = self.elements[106].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[106].row = 4
-        self.elements[106].column = 6  
+        self.elements[106].column = 6 
+        self.button_channel_all.append(tk.Button(self.elements[106].master, text='To All', width=6, command=lambda: self.apply_to_all(106))) 
         # __filler
         self.elements[107].identity = 0 
+        self.button_channel_all.append(tk.Button(self.elements[107].master, text='To All', width=6, command=lambda: self.apply_to_all(107)))
         # channel/sw_triodesel
         self.elements[108].identity = tk.Scale(self.elements[108].master, variable = self.elements[108].value, from_=0,to=1,orient='horizontal',length=60, showvalue=True)
         self.elements[108].row = 12
-        self.elements[108].column = 6   
+        self.elements[108].column = 6 
+        self.button_channel_all.append(tk.Button(self.elements[108].master, text='To All', width=6, command=lambda: self.apply_to_all(108)))  
         # channel/vDAC_SiPM
         self.elements[109].identity = tk.Spinbox(self.elements[109].master, textvariable = self.elements[109].value, width=4, from_=0, to=255)  
         self.elements[109].row = 7
         self.elements[109].column = 1 
+        self.button_channel_all.append(tk.Button(self.elements[109].master, text='To All', width=6, command=lambda: self.apply_to_all(109)))
 
         for index in range(len(self.elements)):
             if(self.elements[index].identity):
@@ -713,6 +736,10 @@ class TGui:
                         for jndex in range(len(self.elements[index].identity)):
                             self.elements[index].identity[jndex].grid(row=self.elements[index].row, column=self.elements[index].column+jndex, sticky=self.elements[index].sticky)
 
+        for index in range(88,110):
+            if self.elements[index].identity:
+                self.button_channel_all[index-88].grid(row=self.elements[index].row, column=self.elements[index].column+1, sticky=self.elements[index].sticky) 
+
         self.load_config_file("config_default.txt")
 
         #####################################################################
@@ -732,6 +759,15 @@ class TGui:
         self.button_data.grid(row=1, column=3, padx=1, pady=5) 
         self.button_data["state"] = "disabled"
         
+    def apply_to_all(self, index):
+        self.app.update()
+        if type(self.elements[index].value.get()) == str :
+            value = eval(self.elements[index].value.get())
+        else:
+            value = self.elements[index].value.get()
+        for ch in range(36):
+            self.configuration.SetInPattern(index + 22 * ch, value)
+
     def update_channel(self, event):
         # Channel: 22 elements
         pre_channel_num = eval(self.pre_channel.get())
@@ -817,8 +853,10 @@ class TGui:
             self.button_config['text'] = 'Re-config ASIC'
             self.button_data["state"] = "normal"
             self.ifac.status = 1
-        # reset digital
-        self.ifac.reset()
+        else:
+            # reset digital
+            self.ifac.reset()
+        self.app.update()
         self.update_bitcode()
         bits = self.configuration.Writebitcode()  
         try:      
