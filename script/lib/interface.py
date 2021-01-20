@@ -123,6 +123,10 @@ class interface:
         print("Firmware version: ", temp[0])
 
     def config(self, buffer):
+        printf("Config:\r\n")
+        for x in buffer:
+            printf("0x%02x ", x)
+        printf("\r\n")
         self.spi.writeBytes(buffer)
 
     def configCheck(self, buffer):
@@ -140,11 +144,10 @@ class interface:
         i = offset + offset -1
         error = 0
         while i>=offset:
-            # printf("0x%02x ", tx_buffer[i])
-            # printf("0x%02x ", ((rxbuffer[i-1]<<6)|(rxbuffer[i]>>2)&0xFF))
-            # print((rxbuffer[i-1]<<6)|(rxbuffer[i]>>2)&0xFF)
             if tx_buffer[i] != ((rxbuffer[i-1]<<6)|(rxbuffer[i]>>2))&0xFF:
                 error += 1
+                print("ValidatePattern: Difference is found at byte["+str(i-offset)+"]: "+hex(tx_buffer[i])
+                        +" ,recv: "+hex(((rxbuffer[i-1]<<6)|(rxbuffer[i]>>2))&0xFF))
             i = i-1
         return(error)
 

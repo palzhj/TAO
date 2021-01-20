@@ -5,10 +5,12 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog
+import tkinter.messagebox
 
 import lib
 from lib import klaus6config
 from lib import interface
+from lib import EDM
 
 class _element:
     def __init__(self, text, value = 0, master = 0, identity = 0, row = 0, column = 0, rowspan = 1, columnspan = 1, sticky = 's'):
@@ -92,7 +94,7 @@ class TGui:
  
         #####################################################################
         tabCH = tk.Frame()
-        notebook.add(tabCH, text='Channel')
+        notebook.add(tabCH, text='Channels')
         tabCH.grid_columnconfigure(0, minsize=200)
         tabCH.grid_columnconfigure(4, minsize=200)
         tabCH.grid_columnconfigure(9, minsize=150)
@@ -120,7 +122,11 @@ class TGui:
         combobox_ch.grid(row=16, column = 1, sticky='e'+'w')
         self.pre_channel = tk.StringVar(tabCH)
         self.pre_channel.set('0')
-        
+
+        #####################################################################        
+        # tabData = tk.Frame()
+        # notebook.add(tabData, text='Read Data')
+
         #####################################################################
         self.elements = []
         for config in self.configuration.parameters:
@@ -714,20 +720,17 @@ class TGui:
 
         #####################################################################
         self.button_load = tk.Button(self.app, text='Load Config', width=15, command=self.load_config_file)
-        # self.button.pack(padx=10, pady=5)
         self.button_load.grid(row=1, column=0, padx=1, pady=5)  
 
         self.button_save = tk.Button(self.app, text='Save Config', width=15, command=self.save_config_file)
-        # self.button.pack(padx=10, pady=5)
         self.button_save.grid(row=1, column=1, padx=1, pady=5)  
 
         self.button_config = tk.Button(self.app, text='Connect ASIC', width=15, command=self.update_asic) 
-        # self.button.pack(padx=10, pady=5)
         self.button_config.grid(row=1, column=2, padx=1, pady=5)  
 
-        self.button_data = tk.Button(self.app, text='Read ASIC', width=15)
-        # self.button.pack(padx=10, pady=5)
-        self.button_data.grid(row=1, column=3, padx=1, pady=5)  
+        self.button_data = tk.Button(self.app, text='Read ASIC', width=15, command=self.read_asic)
+        self.button_data.grid(row=1, column=3, padx=1, pady=5) 
+        self.button_data["state"] = "disabled"
         
     def update_channel(self, event):
         # Channel: 22 elements
@@ -737,10 +740,10 @@ class TGui:
                 value = eval(self.elements[index].value.get())
             else:
                 value = self.elements[index].value.get()
-            self.configuration.SetInPatternWR(index + 22 * pre_channel_num, value)
+            self.configuration.SetInPattern(index + 22 * pre_channel_num, value)
         cur_channel_num = eval(self.cur_channel.get())
         for index in range(88, 110):
-            value = self.configuration.GetFromPatternWR(index + 22 * cur_channel_num)
+            value = self.configuration.GetFromPattern(index + 22 * cur_channel_num)
             if type(self.elements[index].value.get()) == str :
                 self.elements[index].value.set(str(value))
             else:
@@ -757,21 +760,21 @@ class TGui:
             if(self.elements[index].identity):
                 if(index<=87):
                     if type(self.elements[index].identity) == tk.Spinbox:
-                        self.elements[index].value.set(str(self.configuration.GetFromPatternWR(index)))
+                        self.elements[index].value.set(str(self.configuration.GetFromPattern(index)))
                     elif type(self.elements[index].identity) == tk.Scale:
-                        self.elements[index].value.set(self.configuration.GetFromPatternWR(index))
+                        self.elements[index].value.set(self.configuration.GetFromPattern(index))
                     else: # tkinter.Checkbutton array
-                        temp = self.configuration.GetFromPatternWR(index)
+                        temp = self.configuration.GetFromPattern(index)
                         for jndex in range(len(self.elements[index].identity)):
                             self.elements[index].value[jndex].set((temp>>jndex)&0x1)
                 else:
                     cur_channel_num = eval(self.cur_channel.get())
                     if type(self.elements[index].identity) == tk.Spinbox:
-                        self.elements[index].value.set(str(self.configuration.GetFromPatternWR(index + 22 * cur_channel_num)))
+                        self.elements[index].value.set(str(self.configuration.GetFromPattern(index + 22 * cur_channel_num)))
                     elif type(self.elements[index].identity) == tk.Scale:
-                        self.elements[index].value.set(self.configuration.GetFromPatternWR(index + 22 * cur_channel_num))
+                        self.elements[index].value.set(self.configuration.GetFromPattern(index + 22 * cur_channel_num))
                     else: # tkinter.Checkbutton array
-                        temp = self.configuration.GetFromPatternWR(index + 22 * cur_channel_num)
+                        temp = self.configuration.GetFromPattern(index + 22 * cur_channel_num)
                         for jndex in range(len(self.elements[index].identity)):
                             self.elements[index].value[jndex].set((temp>>jndex)&0x1)
 
@@ -782,16 +785,64 @@ class TGui:
             filename += '.txt'
         self.configuration.SaveToFile(filename)
 
+    def update_bitcode(self):
+        for index in range(88):
+            if(self.elements[index].identity):
+                if type(self.elements[index].identity) == tk.Spinbox:
+                    value = eval(self.elements[index].value.get())
+                elif type(self.elements[index].identity) == tk.Scale:
+                    value = self.elements[index].value.get()
+                else:
+                    value = 0
+                    for jndex in range(len(self.elements[index].identity)):
+                        value |= self.elements[index].value[jndex].get() << jndex
+                self.configuration.SetInPattern(index, value)
+        # channels
+        cur_channel_num = eval(self.cur_channel.get())
+        for index in range(88, 110):
+            if(self.elements[index].identity):
+                if type(self.elements[index].value.get()) == str :
+                    value = eval(self.elements[index].value.get())
+                else:
+                    value = self.elements[index].value.get()
+                self.configuration.SetInPattern(index + 22 * cur_channel_num, value)
+
     def update_asic(self):
         if(self.ifac.status == 0):
-            self.ifac.init(linkNo = 0, deviceNo = 0)
+            try:
+                self.ifac.init(linkNo = 0, deviceNo = 0)
+            except Exception:
+                tk.messagebox.showinfo("Error", "Device is not connected")
+                return
             self.button_config['text'] = 'Config ASIC'
-        bits = self.configuration.Writebitcode()
-        error = self.ifac.configCheck(bits)
-        if(error !=0):
+            self.button_data["state"] = "normal"
+            self.ifac.status = 1
+        self.update_bitcode()
+        bits = self.configuration.Writebitcode()  
+        try:      
+            error = self.ifac.configCheck(bits)
+        except Exception:
+            tk.messagebox.showinfo("Error", "Device is not connected")
+            self.button_config['text'] = 'Connect ASIC'
+            self.button_data["state"] = "disabled"
+            self.ifac.status = 0            
+            return            
+        if(error!=0):
             print('Found '+str(error)+' errors during config')
         else:
             print("Config done")
 
-
-
+    def read_asic(self):
+        try:
+            temp = self.ifac.klaus6.readEvent()
+        except Exception:
+            tk.messagebox.showinfo("Error", "Device is not connected")
+            self.button_config['text'] = 'Connect ASIC'
+            self.button_data["state"] = "disabled"
+            self.ifac.status = 0    
+            return
+        print ("0x%02x%02x_%02x%02x_%02x%02x" % (temp[0],temp[1],temp[2],temp[3],temp[4],temp[5]))
+        if(temp[0]!=0x3F):
+            event = EDM.EDM(temp)
+            event.printHeader()
+            event.print()

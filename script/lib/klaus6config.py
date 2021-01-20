@@ -102,7 +102,6 @@ class TVirtualConfig:
         self.parameters.append(_parameter("digital/powerdown_pipe",                  552,    0, "Power down ADC bias when idle"))
         self.parameters.append(_parameter("digital/powerdown_sar",                   553,    0, "Power down ADC bias when idle"))
         self.parameters.append(_parameter("digital/pipemode_enable",                 554,    0, "Enable 12b conversion mode"))
-
         # Channel: 22 parameters
         # channel pattern definition, includes fe/adc/channel-digital. Total 53 bits
         # For the FE, bit 18,19 was added in KLaus5
@@ -131,9 +130,7 @@ class TVirtualConfig:
             self.parameters.append(_parameter("channel"+str(i)+"/vDAC_SiPM",             555+53*i+20+25, 0, "Input terminal voltage tuning DAC"))
         # None
         self.parameters.append(_parameter("", 2463, 0, ""))
-        patternlength = self.GetPatternByteLength()
-        self.bitpattern_read = bytearray(patternlength)
-        self.bitpattern_write = bytearray(patternlength)
+        self.bitpattern_write = bytearray(self.GetPatternByteLength())
 
     def __str__(self):
         string = str()
@@ -177,7 +174,7 @@ class TVirtualConfig:
         # returns true if first character is a '_'
         return self.GetParName(index)[0]=='_'
 
-    def GetFromPatternWR(self, index):
+    def GetFromPattern(self, index):
         temp=0 #temporary value read from pattern
         pos=self.parameters[index].offset
         while (pos<self.parameters[index+1].offset): #loop over bits in _parameter
@@ -189,7 +186,7 @@ class TVirtualConfig:
             pos +=1
         return temp
 
-    def SetInPatternWR(self, index, value):
+    def SetInPattern(self, index, value):
         mask=0x01;
         if (self.parameters[index].endianess==0):
             pos=self.parameters[index].offset
@@ -210,17 +207,17 @@ class TVirtualConfig:
                 pos -= 1;
                 mask<<=1;
 
-    def GetParValueWR(self, name):
+    def GetParValue(self, name):
         npar = self.GetParID(name)
         if (npar<0) | (npar>=len(self.parameters)):
             return -1
-        return self.GetFromPatternWR(npar)
+        return self.GetFromPattern(npar)
 
-    def SetParValueWR(self, name, value):
+    def SetParValue(self, name, value):
         npar = self.GetParID(name)
         if (npar<0) | (npar>=len(self.parameters)):
             return -1
-        self.SetInPatternWR(npar,value)
+        self.SetInPattern(npar,value)
         return npar
 
     def ReadFromFile(self, filename = "config_default.txt"):
@@ -235,7 +232,7 @@ class TVirtualConfig:
             line = line.replace(" ", "").split("=", 1)
             parname = line[0]
             value = eval(line[1]) 
-            if (self.SetParValueWR(parname,value)<0): 
+            if (self.SetParValue(parname,value)<0): 
                 print("Parameter \""+parname+"\" not recognized.")
             line = ifile.readline()
             i += 1
@@ -252,7 +249,7 @@ class TVirtualConfig:
         for npar in range(len(self.parameters)-1):
             if self.ParIsFiller(npar):
                 continue
-            ofile.write(self.GetParName(npar)+" = "+hex(self.GetFromPatternWR(npar))+'\n')
+            ofile.write(self.GetParName(npar)+" = "+hex(self.GetFromPattern(npar))+'\n')
         ofile.close()
         return 1
 
@@ -263,23 +260,3 @@ class TVirtualConfig:
             tx_buffer[ptr-1] = byte
             ptr -= 1
         return tx_buffer
-
-    def ValidatePattern(self):
-        # check bitpattern
-        # take care of the MSB which is not aligned
-        bitmask= (0xff << ((self.GetPatternBitLength()-1)%8+1)) & 0xff
-        bitmask = ~bitmask & 0xff
-        nch=self.GetPatternByteLength()-1
-        errors=0
-        if (bitmask&self.bitpattern_write[nch]) != (bitmask&self.bitpattern_read[nch]):
-            errors+=1
-            print("ValidatePattern: Difference is found at byte["+str(nch)+"]: "+hex(bitmask&self.bitpattern_write[nch])
-                    +" ,recv: "+hex(bitmask&self.bitpattern_read[nch]))
-        nch -= 1
-        while nch>=0:
-            if self.bitpattern_write[nch] != self.bitpattern_read[nch]:
-                errors+=1
-                print("ValidatePattern: Difference is found at byte["+str(nch)+"]: "+hex(bitmask&self.bitpattern_write[nch])
-                        +" ,recv: "+hex(bitmask&self.bitpattern_read[nch]))
-            nch -= 1
-        return errors
