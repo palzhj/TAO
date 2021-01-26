@@ -39,6 +39,21 @@ class TGui:
         #####################################################################
         tabCD = tk.Frame()
         notebook.add(tabCD, text='Common Digital')
+        tabCD_setting = tk.LabelFrame(tabCD, font="bold", text='DEVICE ADDRESS')
+        self.link_setting = tk.IntVar(tabCD_setting)
+        self.link_setting.set(0)
+        link_list = ["FMC LPC0", "FMC HPC1", "FMC HPC0", "FMC LPC1"]
+        self.link_setting_radiobutton = []
+        for i in range(4):
+            self.link_setting_radiobutton.append(tk.Radiobutton(tabCD_setting, variable=self.link_setting, text=link_list[i], value=i))
+            self.link_setting_radiobutton[i].grid(row = 0, column = i)
+        tabCD_setting.grid_columnconfigure(4, minsize=100)
+        tk.Label(tabCD_setting, text='Device offset(0~3):').grid(row=0, column = 5)
+        self.device_setting = tk.StringVar(tabCD_setting)
+        self.device_setting_spinbox = tk.Spinbox(tabCD_setting, textvariable = self.device_setting, width=4, from_=0, to=7)
+        self.device_setting_spinbox.grid(row = 0, column = 6)
+
+        tabCD_setting.pack(fill='both', expand=True)
         tabCD_flags = tk.LabelFrame(tabCD, font="bold", text='Flags')
         tabCD_flags.grid_columnconfigure(2, minsize=100)
         tabCD_flags.pack(fill='both', expand=True)
@@ -738,6 +753,7 @@ class TGui:
         self.elements[109].column = 1 
         self.button_channel_all.append(tk.Button(self.elements[109].master, text='To All', width=6, command=lambda: self.apply_to_all(109)))
 
+        self.elements[10].text = "LVDS readout enable"
         for index in range(len(self.elements)):
             if(self.elements[index].identity):
                 tk.Label(self.elements[index].master, text = self.elements[index].text, anchor='e', width = 24).grid(row=self.elements[index].row, column=self.elements[index].column-1, sticky='s'+'e')
@@ -766,6 +782,9 @@ class TGui:
 
         #####################################################################
         notebook.grid(row=0, column=0, columnspan=5)
+
+        # post-process
+        self.elements[8].identity["state"] = "disabled"
 
         #####################################################################
         self.button_load = tk.Button(self.app, text='Load Config', width=15, command=self.load_config_file)
@@ -890,9 +909,16 @@ class TGui:
                 self.configuration.SetInPattern(index + 22 * cur_channel_num, value)
 
     def update_asic(self):
+        self.app.update()
+        linkNo = self.link_setting.get()
+        deviceNo = eval(self.device_setting.get())
         if(self.ifac.status == 0):
             try:
-                self.ifac.init(linkNo = 0, deviceNo = 0)
+                self.ifac.init(linkNo = linkNo, deviceNo = deviceNo)
+                print ("linkNo: "+str(linkNo)+"; deviceNo: "+str(deviceNo))
+                self.device_setting_spinbox["state"] = "disabled"
+                for radiobutton in self.link_setting_radiobutton:
+                    radiobutton["state"] = "disabled"
             except Exception:
                 tk.messagebox.showinfo("Error", "Device is not connected")
                 return
@@ -900,10 +926,9 @@ class TGui:
             self.button_data["state"] = "normal"
             self.button_close["state"] = "normal"
             self.ifac.status = 1
-        else:
-            # reset digital
-            self.ifac.reset()
-        self.app.update()
+        # else:
+        #     # reset digital
+        #     self.ifac.reset()
         self.update_bitcode()
         bits = self.configuration.Writebitcode()  
         try:      
@@ -916,6 +941,8 @@ class TGui:
             print('Found '+str(error)+' errors during config')
         else:
             print("Config done")
+        # reset digital
+        # self.ifac.reset()
 
     def read_asic(self):
         try:
@@ -935,3 +962,6 @@ class TGui:
         self.button_data["state"] = "disabled"
         self.button_close["state"] = "disabled"
         self.ifac.status = 0
+        self.device_setting_spinbox["state"] = "normal"
+        for radiobutton in self.link_setting_radiobutton:
+            radiobutton["state"] = "normal"

@@ -74,6 +74,7 @@ class interface:
         self.mux.enable_gpio()
         self.mux.enable_spi()
         self.mux.enable_i2ca()
+        self.mux.enable_down()
 
         gpio_addr = (GPIO_ADDR+self.deviceOffset) << 1
         self.gpio = gpio.gpio(gpio_addr, self.linkAddr)
