@@ -880,6 +880,7 @@ class TGui:
                             self.elements[index].value[jndex].set((temp>>jndex)&0x1)
 
     def save_config_file(self, filename = ''):
+        self.update_bitcode()
         filename = tk.filedialog.asksaveasfilename(filetypes=[('TXT', '*.txt'), ('All Files', '*')], 
             defaultextension = '.txt', initialfile='config')
         if not filename.endswith('.txt'):

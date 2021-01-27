@@ -52,7 +52,7 @@ class TVirtualConfig:
         self.parameters.append(_parameter("bias/lfota_LG_DAC",                       124+20, 0, "Low gain Low frequency feedback bias current. Nominal=2.\n 0 is maximum current"))
         self.parameters.append(_parameter("bias/subthbias_Rtrim",                    124+23, 0, "Subthreshold generator tuning, 2 taps. Nominal=00.\nValues 00,01,11. 11 gives steepest SiPM-DAC voltage ramp & highest current. States 01,10 are equivalent."))
         self.parameters.append(_parameter("bias/isgtriode_trim_ena_n",               124+25, 0, "Disable resistor DAC for triode tuning.\n Set to 1,DAC value 255 for minimum power consumption"))
-        self.parameters.append(_parameter("bias/isgtriode_trim_DAC",                 124+26, 0, "Volta    ge DAC for input stage triode tuning"))
+        self.parameters.append(_parameter("bias/isgtriode_trim_DAC",                 124+26, 0, "Voltage DAC for input stage triode tuning"))
         self.parameters.append(_parameter("bias/isg_sdcomp_DAC",                     124+34, 0, "Input stage shutdown compensation current.\nHigher values: lower current\nTune together with sdbias and isgbias to minimize voltage offset between on and off states."))
         self.parameters.append(_parameter("bias/isg_sdbias_DAC",                     124+37, 0, "Input stage shutdown bias current.\nHigher values: lower current\nTune together with sdcomp and isgbias to minimize voltage offset between on and off states.\n Also changes input impedance in low power state."))
         self.parameters.append(_parameter("bias/comparator_th_gs",                   124+40, 0, "Gain selection threshold. Higher value, higher threshold."))
