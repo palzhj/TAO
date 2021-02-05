@@ -95,10 +95,6 @@ class interface:
         sleep(0.2)
         self.gpio.rst_reset()
         sleep(0.1)
-        self.gpio.srst_set()
-        sleep(0.2)
-        self.gpio.srst_reset()
-        sleep(0.1)
     
     def reset_digital(self):
         self.gpio.srst_set()
