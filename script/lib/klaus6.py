@@ -23,7 +23,7 @@ def printf(format, *args):
     sys.stdout.write(format % args)
 
 class klaus6(object):
-    def __init__(self, device_address = 0x40 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
+    def __init__(self, device_address = 0x40 << 1, base_address = 0x200, clk_freq = 160, i2c_freq = 100):
         self.nevt_read = 0
         self.ntimes_read = 0
         self.quiet = True

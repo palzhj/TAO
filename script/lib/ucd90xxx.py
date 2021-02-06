@@ -7,7 +7,7 @@ from lib import i2c
 import math
 
 class ucd90xxx(object):
-    def __init__(self, device_address = 0x67 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
+    def __init__(self, device_address = 0x67 << 1, base_address = 0x200, clk_freq = 160, i2c_freq = 100):
         self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
 
     def read_voltage(self, channel = 1):

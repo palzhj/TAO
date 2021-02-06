@@ -35,7 +35,7 @@ class i2c(object):
     python smbus library, or other smbus compatible I2C interface. Allows reading
     and writing 8-bit, 16-bit, and byte array values to registers
     on the device."""
-    def __init__(self, device_address, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
+    def __init__(self, device_address, base_address = 0x200, clk_freq = 160, i2c_freq = 100):
 
         self.CLK_FREQ_MHZ = clk_freq # MHz
         self.I2C_FREQ_KHZ = i2c_freq # kHz

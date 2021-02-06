@@ -21,7 +21,7 @@ PIN_OR        = 0b00100000  # in
 PIN_CAL_SEL   = 0b10000000  # out
 
 class gpio(object):
-    def __init__(self, device_address = 0x38 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
+    def __init__(self, device_address = 0x38 << 1, base_address = 0x200, clk_freq = 160, i2c_freq = 100):
         self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
         self._i2c.write8(0, True, GPIO_OPR_ADDR)
         self._i2c.write8(0, True, GPIO_PIR_ADDR)

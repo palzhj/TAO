@@ -12,6 +12,48 @@ from lib import klaus6config
 from lib import interface
 from lib import EDM
 
+class ToolTip(object):
+    def __init__(self,widget):
+        self.widget = widget
+        self.tip_window = None
+ 
+    def show_tip(self,tip_text):
+        "Display text in a tooltip window"
+        if self.tip_window or not tip_text:
+            return
+        x, y, _cx, cy = self.widget.bbox("insert")      
+        # get size of widget
+        x = x + self.widget.winfo_rootx() + 25          
+        # calculate to display tooptip
+        y = y + cy + self.widget.winfo_rooty() + 25     
+        # below and to the right
+        self.tip_window = tw = tk.Toplevel(self.widget) 
+        # create new tooltip window
+        tw.wm_overrideredirect(True)                    
+        # remove all Window Manager (wm)
+        tw.wm_geometry("+%d+%d" %(x, y))                
+        # create window size
+ 
+        label = tk.Label(tw, text=tip_text, justify=tk.LEFT,
+                         background="#ffffe0", relief=tk.SOLID,
+                         borderwidth=1,font=("tahoma", "8", "normal"))
+        label.pack(ipadx=1)
+ 
+    def hide_tip(self):
+        tw = self.tip_window
+        self.tip_window = None
+        if tw:
+            tw.destroy()
+ 
+def create_ToolTip(widget, text):
+    tooltip = ToolTip(widget)
+    def enter(event):
+        tooltip.show_tip(text)
+    def leave(event):
+        tooltip.hide_tip()
+    widget.bind('<Enter>', enter)
+    widget.bind('<Leave>', leave)
+
 class _element:
     def __init__(self, text, value = 0, master = 0, identity = 0, row = 0, column = 0, rowspan = 1, columnspan = 1, sticky = 's'):
         self.text = text
@@ -32,7 +74,6 @@ class TGui:
         self.offline_mode = 0
 
         self.app = tk.Tk()
-        # self.app.geometry('800x600')
         self.app.title('KLaus6 Config GUI')
         notebook = ttk.Notebook(self.app)
 
@@ -52,6 +93,7 @@ class TGui:
         self.device_setting = tk.StringVar(tabCD_setting)
         self.device_setting_spinbox = tk.Spinbox(tabCD_setting, textvariable = self.device_setting, width=4, from_=0, to=7)
         self.device_setting_spinbox.grid(row = 0, column = 6)
+        create_ToolTip(self.device_setting_spinbox, "Set by the switch on the board")
 
         tabCD_setting.pack(fill='both', expand=True)
         tabCD_flags = tk.LabelFrame(tabCD, font="bold", text='Flags')
@@ -122,14 +164,14 @@ class TGui:
         tabCH = tk.Frame()
         notebook.add(tabCH, text='Channels')
 
-        tk.Label(tabCH, font="bold", text='Channel:', anchor="e").grid(row=0, column=0)
+        tk.Label(tabCH, font="bold", text='Channel Selection:', anchor="e").grid(row=0, column=0)
         self.cur_channel = tk.StringVar()
         self.cur_channel.set('0')
-        combobox_ch = ttk.Combobox(tabCH, state='readonly', textvariable=self.cur_channel, width = 5, font="bold",
+        combobox_ch = ttk.Combobox(tabCH, state='readonly', textvariable=self.cur_channel, width = 5,
             values=['0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  '10', '11', '12', '13', '14', '15', '16', '17', \
                     '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'])
         combobox_ch.bind('<<ComboboxSelected>>', self.update_channel)
-        combobox_ch.grid(row=0, column = 1, sticky='s'+'n')
+        combobox_ch.grid(row=0, column = 1, sticky='e')
         self.pre_channel = tk.StringVar(tabCH)
         self.pre_channel.set('0')
 
@@ -139,10 +181,10 @@ class TGui:
         CHcolumnspan = 10
         tk.Label(tabCH, font="bold", text='Channel Flags').grid(row=1, column=0, columnspan=CHcolumnspan//2)
         tk.Label(tabCH, font="bold", text='Output & Dynamic range selection').grid(row=1, column=CHcolumnspan//2, columnspan=CHcolumnspan//2)
-        tk.Label(tabCH, anchor="w", text='0) Auto HG/LG').grid(row=2, column=CHcolumnspan-1)
-        tk.Label(tabCH, anchor="w", text='1) External').grid(row=3, column=CHcolumnspan-1)
-        tk.Label(tabCH, anchor="w", text='2) LG force').grid(row=4, column=CHcolumnspan-1)
-        tk.Label(tabCH, anchor="w", text='3) HG force').grid(row=5, column=CHcolumnspan-1)
+        # tk.Label(tabCH, anchor="w", text='0) Auto HG/LG').grid(row=2, column=CHcolumnspan-1)
+        # tk.Label(tabCH, anchor="w", text='1) External').grid(row=3, column=CHcolumnspan-1)
+        # tk.Label(tabCH, anchor="w", text='2) LG force').grid(row=4, column=CHcolumnspan-1)
+        # tk.Label(tabCH, anchor="w", text='3) HG force').grid(row=5, column=CHcolumnspan-1)
         ttk.Separator(tabCH, orient='horizontal').grid(row=6,  sticky='e'+'w', columnspan=CHcolumnspan)
         tk.Label(tabCH, font="bold", text='DACs').grid(row=7, column=0, columnspan=CHcolumnspan)
         ttk.Separator(tabCH, orient='horizontal').grid(row=11,  sticky='e'+'w', columnspan=CHcolumnspan)
@@ -156,9 +198,9 @@ class TGui:
         combobox_toch = ttk.Combobox(tabCH, state='readonly', textvariable=self.copy_channel, width = 5,
             values=['0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  '10', '11', '12', '13', '14', '15', '16', '17', \
                     '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'])
-        combobox_toch.grid(row=17, column = 1, sticky='s'+'n')
+        combobox_toch.grid(row=17, column = 1, sticky='e')
         self.button_channel_all_copy = tk.Button(tabCH, text='Copy to all channels', width=20, command=self.channel_all_copy)
-        self.button_channel_all_copy.grid(row=17, column=CHcolumnspan//2+1)  
+        self.button_channel_all_copy.grid(row=17, column=CHcolumnspan//2)  
 
         #####################################################################        
         # tabData = tk.Frame()
@@ -779,6 +821,15 @@ class TGui:
                 self.button_channel_all[index-88].grid(row=self.elements[index].row, column=self.elements[index].column+1, sticky=self.elements[index].sticky) 
 
         self.load_config_file("config_default.txt")
+
+        # Tooltip
+        for index in range(len(self.elements)):
+            if(self.elements[index].identity):
+                if(type(self.elements[index].identity)==list):
+                    for j in range(len(self.elements[index].identity)):
+                        create_ToolTip(self.elements[index].identity[j], self.configuration.parameters[index].description)
+                else:
+                    create_ToolTip(self.elements[index].identity, self.configuration.parameters[index].description)
 
         #####################################################################
         notebook.grid(row=0, column=0, columnspan=5)

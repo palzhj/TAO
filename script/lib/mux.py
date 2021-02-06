@@ -15,7 +15,7 @@ MUX_CR_EEPROM = 0b00010000 # I2CB for EEPROM
 MUX_CR_DOWN   = 0b00100000 # I2CB for downstream
 
 class mux(object):
-    def __init__(self, device_address = 0x70 << 1, base_address = 0x200, clk_freq = 120, i2c_freq = 100):
+    def __init__(self, device_address = 0x70 << 1, base_address = 0x200, clk_freq = 160, i2c_freq = 100):
         self._i2c = i2c.i2c(device_address, base_address, clk_freq, i2c_freq)
 
     def enable_all(self):
