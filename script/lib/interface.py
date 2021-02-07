@@ -94,13 +94,13 @@ class interface:
         self.gpio.rst_set()
         sleep(0.2)
         self.gpio.rst_reset()
-        sleep(0.1)
+        sleep(0.4)
     
     def reset_digital(self):
         self.gpio.srst_set()
         sleep(0.2)
         self.gpio.srst_reset()
-        sleep(0.1)            
+        sleep(0.2)            
 
     def print(self):
         # firmware info
