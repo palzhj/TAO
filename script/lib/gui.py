@@ -83,7 +83,7 @@ class TGui:
         tabCD_setting = tk.LabelFrame(tabCD, font="bold", text='DEVICE ADDRESS')
         self.link_setting = tk.IntVar(tabCD_setting)
         self.link_setting.set(0)
-        link_list = ["FMC LPC0", "FMC HPC1", "FMC HPC0", "FMC LPC1"]
+        link_list = ["FMC LPC0", "FMC LPC1", "FMC HPC0", "FMC HPC1"]
         self.link_setting_radiobutton = []
         for i in range(4):
             self.link_setting_radiobutton.append(tk.Radiobutton(tabCD_setting, variable=self.link_setting, text=link_list[i], value=i))
