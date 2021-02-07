@@ -79,13 +79,13 @@ class spi(object):
         while length >= MAX_BUFFER_LEN:
             self._i2c.writeBytes(data[send_len:send_len+MAX_BUFFER_LEN], True, 0x0F)
             # print(data[send_len:send_len+MAX_BUFFER_LEN])
-            sleep(0.1)
+            sleep(0.2)
             send_len += MAX_BUFFER_LEN
             length -= MAX_BUFFER_LEN
         if(length):
             self._i2c.writeBytes(data[send_len:], True, 0x0F)
             # print(data[send_len:])
-        sleep(0.1)
+            sleep(0.2)
         self.cs_high()
 
     def writeRead(self, data):
@@ -96,15 +96,15 @@ class spi(object):
         while length >= MAX_BUFFER_LEN:
             self._i2c.writeBytes(data[send_len:send_len+MAX_BUFFER_LEN], True, 0x0F)
             # print(data[send_len:send_len+MAX_BUFFER_LEN])
-            sleep(0.1)
+            sleep(0.2)
             send_len += MAX_BUFFER_LEN
             length -= MAX_BUFFER_LEN
             rxbutter += self._i2c.readBytes(MAX_BUFFER_LEN)
         if(length):
             self._i2c.writeBytes(data[send_len:], True, 0x0F)
-            sleep(0.1)
             # print(data[send_len:])
+            sleep(0.2)
             rxbutter += self._i2c.readBytes(length)
-        sleep(0.1)
+        # sleep(0.2)
         self.cs_high()
         return rxbutter
