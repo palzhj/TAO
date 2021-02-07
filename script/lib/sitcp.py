@@ -57,3 +57,6 @@ class sitcp(object):
 
     def close(self):
         self.socket.close()
+
+    # def __del__(self):
+    #     self.socket.close()
