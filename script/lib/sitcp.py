@@ -14,6 +14,7 @@ class sitcp(object):
         self.reg = rbcp.Rbcp()
         self.reg.write(0xFFFFFF10, bytes(0x7)) # Keep alive packet,  Fast retrains,  Nagle buffering
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.ptr = 0
 
     def open(self):
         self.socket.connect((self.tcp_ip, self.tcp_port))
@@ -23,8 +24,13 @@ class sitcp(object):
         return (length[0]<<24 | length[1]<<16 | length[2]<<8 | length[3])  
 
     def readEvents(self):
-        length = self.getDataLength()
-        return self.socket.recv(length)
+        ptr_n = self.getDataLength()
+        length = ptr_n - self.ptr
+        if length < 0:
+            length = 2**32 + ptr_n - self.ptr
+        data = self.socket.recv(length)
+        self.ptr = ptr_n
+        return data
 
     def getLinkStatus(self, i=0):
         temp = self.reg.read(0x20, 8)

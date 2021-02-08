@@ -60,12 +60,15 @@ class interface:
         self.deviceOffset = deviceNo & 0x03
 
         self.reg = rbcp.Rbcp()
+
         self.sysmon = sysmon.sysmon()
         if(linkNo <2):
             pmbus_base = LPC_PMBUS_BASE_ADDR
         else:
             pmbus_base = HPC_PMBUS_BASE_ADDR
         self.ucd = ucd90xxx.ucd90xxx(UCD_ADDR<<1, pmbus_base)
+        self.power_on()
+        sleep(0.5)
 
         mux_addr = (MUX_ADDR+self.deviceOffset) << 1
         self.mux = mux.mux(mux_addr, self.linkAddr)
@@ -85,8 +88,29 @@ class interface:
         klaus_addr = (KLAUS_ADDR+self.deviceOffset) << 1
         self.klaus6 = klaus6.klaus6(klaus_addr, self.linkAddr)
         
-        self.reset()      
+        self.reset()  
+        self.reset_digital()    
         self.status = 1 # initialized
+
+    def power_on(self):
+        self.reg.write(0x18, bytes([0xFF]))
+        self.reg.write(0x19, bytes([0xFF]))
+        self.reg.write(0x1A, bytes([0xFF]))
+        self.reg.write(0x1B, bytes([0xFF]))
+        self.reg.write(0x1C, bytes([0xFF]))
+        self.reg.write(0x1D, bytes([0xFF]))
+        self.reg.write(0x1E, bytes([0xFF]))
+        self.reg.write(0x1F, bytes([0xFF]))
+
+    def power_off(self):
+        self.reg.write(0x18, bytes([0x0]))
+        self.reg.write(0x19, bytes([0x0]))
+        self.reg.write(0x1A, bytes([0x0]))
+        self.reg.write(0x1B, bytes([0x0]))
+        self.reg.write(0x1C, bytes([0x0]))
+        self.reg.write(0x1D, bytes([0x0]))
+        self.reg.write(0x1E, bytes([0x0]))
+        self.reg.write(0x1F, bytes([0x0]))
 
     def reset(self):
         self.gpio.cal_sel_reset() # select INT
@@ -94,7 +118,7 @@ class interface:
         self.gpio.rst_set()
         sleep(0.2)
         self.gpio.rst_reset()
-        sleep(0.4)
+        sleep(0.2)
     
     def reset_digital(self):
         self.gpio.srst_set()
