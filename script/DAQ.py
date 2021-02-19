@@ -45,6 +45,7 @@ def printf(format, *outs):
 output = TFile(args.output, "recreate")
 tree = TTree("dump", "dumptree")
 
+asicid = array('i',[0])
 channel = array('i',[0])
 groupID = array('i',[0])
 channelID = array('i',[0])
@@ -57,6 +58,7 @@ T_MC = array('i',[0])
 T_FC = array('i',[0])
 
 # "*/i": i means unsigned int with 32 bit
+tree.Branch("asicid",asicid,"asicid/i")
 tree.Branch("channel",channel,"channel/i")
 tree.Branch("groupID",groupID,"groupID/i")
 tree.Branch("channelID",channelID,"channelID/i")
@@ -90,6 +92,7 @@ while (0==sitcp.getLinkStatus()):
 
 sitcp.open()
 sleep(5)
+i_asic=-1
 for n in range(args.nseq):
     sleep(1)
     data = sitcp.readEvents()
@@ -97,6 +100,8 @@ for n in range(args.nseq):
     i = 0
     while i<length:
           #print ("0x%02x%02x_%02x%02x_%02x%02x" % (data[i],data[i+1],data[i+2],data[i+3],data[i+4],data[i+5]))
+          if((data[i]==0x3F) and (data[i+4]!=0xFF) and (data[i+5]!=0xFF)):
+            i_asic = data[i+1] & 0xFF
           if(data[i]!=0x3F):
             bytes_i_event = data[i:(i+6)]
             i_event = EDM.EDM(bytes_i_event)
@@ -105,6 +110,7 @@ for n in range(args.nseq):
                       i_event.printHeader()
                    i_event.print()
     
+            asicid     [0]= i_asic
             channel    [0]= i_event.channel
             groupID    [0]= i_event.groupID
             channelID  [0]= i_event.channelID
