@@ -31,7 +31,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Run KLauS6 DAQ.')
     parser.add_argument("--nseq", type=int, default=10, help='sequences to be processed')
     parser.add_argument("--test", default=False, help="test mode using Klaus6_bitflow_test.txt, instead of from output of Klaus6")
-    parser.add_argument("--quiet", default=False, help="be quiet")
+    parser.add_argument("--quiet", default=True, help="be quiet")
     parser.add_argument("--output", default="test-output.root", help="specify output filename")
     return parser
 
@@ -98,11 +98,12 @@ for n in range(args.nseq):
     data = sitcp.readEvents()
     length = len(data)
     i = 0
+    ready = False
     while i<length:
-          #print ("0x%02x%02x_%02x%02x_%02x%02x" % (data[i],data[i+1],data[i+2],data[i+3],data[i+4],data[i+5]))
           if((data[i]==0x3F) and (data[i+4]!=0xFF) and (data[i+5]!=0xFF)):
             i_asic = data[i+1] & 0xFF
-          if(data[i]!=0x3F):
+            ready = True
+          if(data[i]!=0x3F && ready):
             bytes_i_event = data[i:(i+6)]
             i_event = EDM.EDM(bytes_i_event)
             if not args.quiet:
@@ -123,7 +124,10 @@ for n in range(args.nseq):
             T_FC       [0]= i_event.T_FC
             tree.Fill()
     
-          i += 6
+          if(ready):
+            i += 6
+          if(not ready):
+            i += 1
           if(i+6>=length):
             break
     if(n>args.nseq):
