@@ -23,7 +23,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Run Tao Detector Simulation.')
     parser.add_argument("--evtmax", type=int, default=10, help='events to be processed')
     parser.add_argument("--test", default=False, help="test mode using Klaus6_bitflow_test.txt, instead of from output of Klaus6")
-    parser.add_argument("--quiet", default=False, help="be quiet")
+    parser.add_argument("--quiet", default=True, help="be quiet")
     return parser
 
 parser = get_parser()

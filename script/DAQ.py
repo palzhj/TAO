@@ -29,7 +29,7 @@ from array import array
 def get_parser():
     import argparse
     parser = argparse.ArgumentParser(description='Run KLauS6 DAQ.')
-    parser.add_argument("--nseq", type=int, default=10, help='sequences to be processed')
+    parser.add_argument("--nseq", type=int, default=1, help='sequences to be processed')
     parser.add_argument("--test", default=False, help="test mode using Klaus6_bitflow_test.txt, instead of from output of Klaus6")
     parser.add_argument("--quiet", default=True, help="be quiet")
     parser.add_argument("--output", default="test-output.root", help="specify output filename")
@@ -94,16 +94,27 @@ sitcp.open()
 sleep(5)
 i_asic=-1
 for n in range(args.nseq):
-    sleep(1)
+    sleep(2)
     data = sitcp.readEvents()
     length = len(data)
     i = 0
     ready = False
+    print("**** length is ", length)
+    #for j in range(0, length):
+    #    print('0x%x'%data[j])
+
     while i<length:
-          if((data[i]==0x3F) and (data[i+4]!=0xFF) and (data[i+5]!=0xFF)):
-            i_asic = data[i+1] & 0xFF
-            ready = True
-          if(data[i]!=0x3F && ready):
+          if(n==0):
+            if((data[i]==0x3F) and (data[i+4]!=0xFF) and (data[i+5]!=0xFF)):
+              i_asic = data[i+1] & 0xFF
+              ready = True
+
+          if(n>0 and (i-6)>=0):
+            if((data[i]==0x3F) and (data[i+1]<0x08) and (data[i-6]==0x3F) and (data[i-2]==0xFF) and (data[i-1]==0xFF)):
+              i_asic = data[i+1] & 0xFF
+              ready = True
+
+          if(data[i]!=0x3F and ready):
             bytes_i_event = data[i:(i+6)]
             i_event = EDM.EDM(bytes_i_event)
             if not args.quiet:
@@ -128,7 +139,7 @@ for n in range(args.nseq):
             i += 6
           if(not ready):
             i += 1
-          if(i+6>=length):
+          if(i+6>length):
             break
     if(n>args.nseq):
       break
